@@ -24,12 +24,23 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical">
+            <StackPanel.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Grid.Column" Value="0"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                </Style>
+                <Style TargetType="ComboBox">
+                    <Setter Property="Grid.Column" Value="1"/>
+                    <Setter Property="IsSynchronizedWithCurrentItem" Value="False"/>
+                    <Setter Property="Margin" Value="10,0,0,0"/>
+                </Style>
+            </StackPanel.Resources>
             <TextBlock Text="Group" />
-            <ComboBox Name="GroupComboBox" Grid.Row="0" SelectionChanged="GroupComboBox_SelectionChanged" PlaceholderText="Select ..." ItemTemplate="{StaticResource DisplayNameTemplate}"/>
+            <ComboBox Name="GroupComboBox" SelectionChanged="GroupComboBox_SelectionChanged" PlaceholderText="Select ..." ItemTemplate="{StaticResource DisplayNameTemplate}"/>
             <TextBlock Text="Source" />
-            <ComboBox Name="SourceComboBox" Grid.Row="1" SelectionChanged="SourceComboBox_SelectionChanged" PlaceholderText="Select ..." ItemTemplate="{StaticResource DisplayNameTemplate}"/>
+            <ComboBox Name="SourceComboBox" SelectionChanged="SourceComboBox_SelectionChanged" PlaceholderText="Select ..." ItemTemplate="{StaticResource DisplayNameTemplate}"/>
             <TextBlock Text="Format"/>
-            <ComboBox Name="FormatComboBox" Grid.Row="2" SelectionChanged="FormatComboBox_SelectionChanged" PlaceholderText="Default format" ItemTemplate="{StaticResource DisplayNameTemplate}"/>
+            <ComboBox Name="FormatComboBox" SelectionChanged="FormatComboBox_SelectionChanged" PlaceholderText="Default format" ItemTemplate="{StaticResource DisplayNameTemplate}"/>
 
             <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,10,0,0">
                 <Button Content="Start" Name="StartButton" IsEnabled="False" Click="StartButton_Click"/>

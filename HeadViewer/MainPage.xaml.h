@@ -29,16 +29,20 @@ namespace HeadViewer
         virtual void OnNavigatedFrom(NavigationEventArgs^ e) override;
 
     private:
-        task<void> GroupComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
-        task<void> SourceComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
-        task<void> FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
-        task<void> StopButton_Click(Object^ sender, RoutedEventArgs^ e);
-        task<void> StartButton_Click(Object^ sender, RoutedEventArgs^ e);
+        void GroupComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
+        void SourceComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
+        void FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
+        void StopButton_Click(Object^ sender, RoutedEventArgs^ e);
+        void StartButton_Click(Object^ sender, RoutedEventArgs^ e);
 
     private:
         void DisposeMediaCapture();
         void UpdateFrameSource();
 
+        task<void> HandleNavigatedFrom();
+        task<void> OnGroupSelectionChanged();
+        task<void> OnSourceSelectionChanged();
+        task<void> OnFormatSelectionChanged();
         task<void> StartReaderAsync();
         task<void> StopReaderAsync();
         task<void> CreateReaderAsync();

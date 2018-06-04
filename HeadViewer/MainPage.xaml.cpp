@@ -28,6 +28,7 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
 	InitializeComponent();
+    m_frameRenderer = ref new FrameRenderer(PreviewImage);
 }
 
 void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
@@ -40,8 +41,14 @@ void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
 
 void MainPage::OnNavigatedFrom(NavigationEventArgs^ e)
 {
+    HandleNavigatedFrom();
+}
+
+task<void> MainPage::HandleNavigatedFrom()
+{
     delete m_groupCollection;
-    StopReaderAsync();
+    co_await StopReaderAsync();
+    DisposeMediaCapture();
 }
 
 task<void> MainPage::UpdateButtonStateAsync()
@@ -60,71 +67,101 @@ void MainPage::DisposeMediaCapture()
 
     m_source = nullptr;
 
-    delete m_mediaCapture.Get();
-    m_mediaCapture = nullptr;
+    if (m_mediaCapture.Get())
+    {
+        delete m_mediaCapture.Get();
+        m_mediaCapture = nullptr;
+    }
 }
 
-task<void> MainPage::GroupComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e)
+void MainPage::GroupComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e)
+{
+    OnGroupSelectionChanged();
+}
+
+void MainPage::SourceComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e)
+{
+    OnSourceSelectionChanged();
+}
+
+void MainPage::FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e)
+{
+    OnFormatSelectionChanged();
+}
+
+task<void> MainPage::OnGroupSelectionChanged()
 {
     co_await StopReaderAsync();
     DisposeMediaCapture();
     auto group = dynamic_cast<FrameSourceGroupModel^>(GroupComboBox->SelectedItem);
-    if (group != nullptr)
+    if (group == nullptr)
     {
-        auto initialized = co_await TryInitializeCaptureAsync();
+        return;
+    }
+    auto initialized = co_await TryInitializeCaptureAsync();
+    if (initialized)
+    {
         SourceComboBox->ItemsSource = group->SourceInfos;
         SourceComboBox->SelectedIndex = 0;
     }
 }
 
-task<void> MainPage::SourceComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e)
+task<void> MainPage::OnSourceSelectionChanged()
 {
     co_await StopReaderAsync();
-    if (SourceComboBox->SelectedItem != nullptr)
+    if (SourceComboBox->SelectedItem == nullptr)
     {
-        co_await StartReaderAsync();
-        auto formats = ref new Vector<FrameFormatModel^>();
-        if (m_mediaCapture != nullptr && m_source != nullptr)
-        {
-            for (auto format : m_source->SupportedFormats)
-            {
-                if (FrameRenderer::GetSubtypeForFrameReader(m_source->Info->SourceKind, format) != nullptr)
-                {
-                    formats->Append(ref new FrameFormatModel(format));
-                }
-            }
-        }
-        FormatComboBox->ItemsSource = formats;
+        return;
     }
+    co_await StartReaderAsync();
+    auto formats = ref new Vector<FrameFormatModel^>();
+    if (m_mediaCapture == nullptr || m_source == nullptr)
+    {
+        return;
+    }
+
+    for (auto format : m_source->SupportedFormats)
+    {
+        if (FrameRenderer::GetSubtypeForFrameReader(m_source->Info->SourceKind, format) != nullptr)
+        {
+            formats->Append(ref new FrameFormatModel(format));
+        }
+    }
+
+    FormatComboBox->ItemsSource = formats;
 }
 
-task<void> MainPage::FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e)
+task<void> MainPage::OnFormatSelectionChanged()
 {
     auto format = dynamic_cast<FrameFormatModel^>(FormatComboBox->SelectedItem);
     co_await ChangeMediaFormatAsync(format);
 }
 
-task<void> MainPage::StartButton_Click(Object^ sender, RoutedEventArgs^ e)
+void MainPage::StartButton_Click(Object^ sender, RoutedEventArgs^ e)
 {
-    co_await StartReaderAsync();
+    StartReaderAsync();
 }
 
-task<void> MainPage::StopButton_Click(Object^ sender, RoutedEventArgs^ e)
+void MainPage::StopButton_Click(Object^ sender, RoutedEventArgs^ e)
 {
-    co_await StopReaderAsync();
+    StopReaderAsync();
 }
-
 
 task<void> MainPage::StartReaderAsync()
 {
     co_await CreateReaderAsync();
+    if (m_reader == nullptr || m_streaming)
+    {
+        return;
+    }
+
     auto result = co_await m_reader->StartAsync();
+
     if (result == MediaFrameReaderStartStatus::Success)
     {
         m_streaming = true;
-    
+        UpdateButtonStateAsync();
     }
-    return co_await UpdateButtonStateAsync();
 }
 
 task<void> MainPage::StopReaderAsync()
@@ -137,82 +174,34 @@ task<void> MainPage::StopReaderAsync()
         m_reader = nullptr;
         //m_logger->Log("Reader stopped");
     }
-    co_await UpdateButtonStateAsync();
-
-    DisposeMediaCapture();
+    UpdateButtonStateAsync();
 }
 
 task<void> MainPage::CreateReaderAsync()
 {
-    auto success = co_await TryInitializeCaptureAsync();
-    if (success)
+    auto initialized = co_await TryInitializeCaptureAsync();
+    if (!initialized)
     {
-        UpdateFrameSource();
-        if (m_source != nullptr)
-        {
-            // Ask the MediaFrameReader to use a subtype that we can render.
-            String^ requestedSubtype = FrameRenderer::GetSubtypeForFrameReader(m_source->Info->SourceKind, m_source->CurrentFormat);
-            if (requestedSubtype != nullptr)
-            {
-                m_reader = co_await m_mediaCapture->CreateFrameReaderAsync(m_source, requestedSubtype);
-                m_frameArrivedToken = m_reader->FrameArrived +=
-                        ref new TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>(
-                            this, &MainPage::Reader_FrameArrived);
-                    //m_logger->Log("Reader created on source: " + m_source->Info->Id);
-            }
-        }
-    }
-}
-
-task<bool> MainPage::TryInitializeCaptureAsync()
-{
-    if (m_mediaCapture != nullptr)
-    {
-        co_await task_from_result(true);
+        return;
     }
 
-    auto groupModel = dynamic_cast<FrameSourceGroupModel^>(GroupComboBox->SelectedItem);
-    if (groupModel == nullptr)
+    UpdateFrameSource();
+
+    if (m_source == nullptr)
     {
-        co_await task_from_result(false);
+        return;
     }
-
-    // Create a new media capture object.
-    m_mediaCapture = ref new MediaCapture();
-
-    auto settings = ref new MediaCaptureInitializationSettings();
-
-    // Select the source we will be reading from.
-    settings->SourceGroup = groupModel->SourceGroup;
-
-    // This media capture has exclusive control of the source.
-    settings->SharingMode = MediaCaptureSharingMode::ExclusiveControl;
-
-    // Set to CPU to ensure frames always contain CPU SoftwareBitmap images,
-    // instead of preferring GPU D3DSurface images.
-    settings->MemoryPreference = MediaCaptureMemoryPreference::Cpu;
-
-    // Capture only video. Audio device will not be initialized.
-    settings->StreamingCaptureMode = StreamingCaptureMode::Video;
-
-    // Initialize MediaCapture with the specified group.
-    // This must occur on the UI thread because some device families
-    // (such as Xbox) will prompt the user to grant consent for the
-    // app to access cameras.
-    // This can raise an exception if the source no longer exists,
-    // or if the source could not be initialized.
-    try
+    // Ask the MediaFrameReader to use a subtype that we can render.
+    String^ requestedSubtype = FrameRenderer::GetSubtypeForFrameReader(m_source->Info->SourceKind, m_source->CurrentFormat);
+    if (requestedSubtype == nullptr)
     {
-        co_await m_mediaCapture->InitializeAsync(settings);
-
-        //m_logger->Log("Successfully initialized MediaCapture for " + groupModel->DisplayName);
+        return;
     }
-    catch (Exception^ exception)
-    {
-        //m_logger->Log("Failed to initialize media capture: " + exception->Message);
-        DisposeMediaCapture();
-        return false;
-    }
+    m_reader = co_await m_mediaCapture->CreateFrameReaderAsync(m_source, requestedSubtype);
+    m_frameArrivedToken = m_reader->FrameArrived +=
+            ref new TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>(
+                this, &MainPage::Reader_FrameArrived);
+    //m_logger->Log("Reader created on source: " + m_source->Info->Id);
 }
 
 void MainPage::UpdateFrameSource()
@@ -244,21 +233,73 @@ void MainPage::UpdateFrameSource()
     }
 }
 
+task<bool> MainPage::TryInitializeCaptureAsync()
+{
+    if (m_mediaCapture != nullptr)
+    {
+        co_return true;
+    }
+
+    auto groupModel = dynamic_cast<FrameSourceGroupModel^>(GroupComboBox->SelectedItem);
+    if (groupModel == nullptr)
+    {
+        co_return false;
+    }
+
+    // Create a new media capture object.
+    m_mediaCapture = ref new MediaCapture();
+
+    auto settings = ref new MediaCaptureInitializationSettings();
+
+    // Select the source we will be reading from.
+    settings->SourceGroup = groupModel->SourceGroup;
+
+    // This media capture has exclusive control of the source.
+    settings->SharingMode = MediaCaptureSharingMode::ExclusiveControl;
+
+    // Set to CPU to ensure frames always contain CPU SoftwareBitmap images,
+    // instead of preferring GPU D3DSurface images.
+    settings->MemoryPreference = MediaCaptureMemoryPreference::Cpu;
+
+    // Capture only video. Audio device will not be initialized.
+    settings->StreamingCaptureMode = StreamingCaptureMode::Video;
+
+    // Initialize MediaCapture with the specified group.
+    // This must occur on the UI thread because some device families
+    // (such as Xbox) will prompt the user to grant consent for the
+    // app to access cameras.
+    // This can raise an exception if the source no longer exists,
+    // or if the source could not be initialized.
+    try
+    {
+        co_await m_mediaCapture->InitializeAsync(settings);
+
+        Debug::WriteLine(L"Successfully initialized MediaCapture for %s", groupModel->DisplayName->Data());
+        co_return true;
+    }
+    catch (Exception^ exception)
+    {
+        Debug::WriteLine(L"Failed to initialize media capture: %s", exception->Message->Data());
+        DisposeMediaCapture();
+        co_return false;
+    }
+}
+
 task<void> MainPage::ChangeMediaFormatAsync(FrameFormatModel^ format)
 {
     if (m_source == nullptr)
     {
         //m_logger->Log("Unable to set format when source is not set.");
-        co_await task_from_result();
+        co_return;
     }
 
     // Do nothing if no format was selected, or if the selected format is the same as the current one.
     if (format == nullptr || format->HasSameFormat(m_source->CurrentFormat))
     {
-        co_await task_from_result();
+        co_return;
     }
 
-    co_await m_source->SetFormatAsync(format->Format);
+    m_source->SetFormatAsync(format->Format);
 }
 
 void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args)
