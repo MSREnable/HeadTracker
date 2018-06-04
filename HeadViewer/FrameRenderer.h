@@ -38,19 +38,21 @@ namespace HeadViewer
             Windows::Media::Capture::Frames::MediaFrameSourceKind kind,
             Windows::Media::Capture::Frames::MediaFrameFormat^ format);
 
+        property bool UsePseudoColorForInfrared;
+
     private: // Private static methods.
         /// <summary>
         /// Converts the input frame to BGRA8 premultiplied alpha format and returns the result.
         /// Returns nullptr if the input frame cannot be converted BGRA8 premultiplied alpha.
         /// </summary>
-        static Windows::Graphics::Imaging::SoftwareBitmap^ ConvertToDisplayableImage(
+        Windows::Graphics::Imaging::SoftwareBitmap^ ConvertToDisplayableImage(
             Windows::Media::Capture::Frames::VideoMediaFrame^ inputFrame);
 
         /// <summary>
         /// Transforms pixels of inputBitmap to an output bitmap using the supplied pixel transformation method.
         /// Returns nullptr if translation fails.
         /// </summary>
-        static Windows::Graphics::Imaging::SoftwareBitmap^ TransformBitmap(
+        Windows::Graphics::Imaging::SoftwareBitmap^ TransformBitmap(
             Windows::Graphics::Imaging::SoftwareBitmap^ inputBitmap,
             TransformScanline pixelTransformation);
 

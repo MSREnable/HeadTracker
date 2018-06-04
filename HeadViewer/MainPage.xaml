@@ -42,6 +42,11 @@
             <TextBlock Text="Format"/>
             <ComboBox Name="FormatComboBox" SelectionChanged="FormatComboBox_SelectionChanged" PlaceholderText="Default format" ItemTemplate="{StaticResource DisplayNameTemplate}"/>
 
+            <StackPanel Name="InfraredOptions"  Orientation="Horizontal">
+                <ToggleSwitch Name="UsePseudoColor"  IsOn="False" Toggled="UsePseudoColor_Toggled">Use pseudo color</ToggleSwitch>
+                <ToggleSwitch Name="AlternateFrames" IsOn="False" Toggled="AlternateFrames_Toggled">Show alternate frames</ToggleSwitch>
+            </StackPanel>
+
             <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,10,0,0">
                 <Button Content="Start" Name="StartButton" IsEnabled="False" Click="StartButton_Click"/>
                 <Button Content="Stop" Name="StopButton" IsEnabled="False" Click="StopButton_Click" Margin="10,0,0,0"/>

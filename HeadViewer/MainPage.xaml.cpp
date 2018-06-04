@@ -98,6 +98,7 @@ task<void> MainPage::OnGroupSelectionChanged()
     {
         return;
     }
+
     auto initialized = co_await TryInitializeCaptureAsync();
     if (initialized)
     {
@@ -197,6 +198,7 @@ task<void> MainPage::CreateReaderAsync()
     {
         return;
     }
+
     m_reader = co_await m_mediaCapture->CreateFrameReaderAsync(m_source, requestedSubtype);
     m_frameArrivedToken = m_reader->FrameArrived +=
             ref new TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>(
@@ -231,6 +233,10 @@ void MainPage::UpdateFrameSource()
     {
         m_source = nullptr;
     }
+
+    bool enableIrOptions = (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared);
+    UsePseudoColor->IsEnabled = enableIrOptions;
+    AlternateFrames->IsEnabled = enableIrOptions;
 }
 
 task<bool> MainPage::TryInitializeCaptureAsync()
@@ -304,12 +310,38 @@ task<void> MainPage::ChangeMediaFormatAsync(FrameFormatModel^ format)
 
 void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args)
 {
+    m_frameNum++;
+
+    if ((m_processAlternateFrames) && (m_frameNum % 2 == 0))
+    {
+        return;
+    }
+
     // TryAcquireLatestFrame will return the latest frame that has not yet been acquired.
     // This can return null if there is no such frame, or if the reader is not in the
     // "Started" state. The latter can occur if a FrameArrived event was in flight
     // when the reader was stopped.
+
     if (MediaFrameReference^ frame = reader->TryAcquireLatestFrame())
     {
         m_frameRenderer->ProcessFrame(frame);
+    }
+}
+
+
+void HeadViewer::MainPage::UsePseudoColor_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+    if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
+    {
+        m_frameRenderer->UsePseudoColorForInfrared = UsePseudoColor->IsEnabled && UsePseudoColor->IsOn;
+    }
+}
+
+
+void HeadViewer::MainPage::AlternateFrames_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+    if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
+    {
+        m_processAlternateFrames = AlternateFrames->IsEnabled && AlternateFrames->IsOn;
     }
 }

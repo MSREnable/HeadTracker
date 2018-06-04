@@ -172,6 +172,16 @@ static void PseudoColorFor8BitInfrared(int pixelWidth, byte* inputRowBytes, byte
     }
 }
 
+// Maps each pixel in a scanline from a 8 bit infrared value to a pseudo-color pixel.
+static void GrayScaleFor8BitInfrared(int pixelWidth, byte* inputRowBytes, byte* outputRowBytes)
+{
+    ColorBGRA* outputRow = reinterpret_cast<ColorBGRA*>(outputRowBytes);
+    for (int x = 0; x < pixelWidth; x++)
+    {
+        outputRow[x] = ColorBGRA{ inputRowBytes[x], inputRowBytes[x], inputRowBytes[x], 255 };
+    }
+}
+
 FrameRenderer::FrameRenderer(Image^ imageElement)
 {
     m_imageElement = imageElement;
@@ -326,7 +336,8 @@ SoftwareBitmap^ FrameRenderer::ConvertToDisplayableImage(VideoMediaFrame^ inputF
         {
         case BitmapPixelFormat::Gray8:
             // Use pseudo color to render 8 bits frames.
-            return TransformBitmap(inputBitmap, PseudoColorFor8BitInfrared);
+            //return TransformBitmap(inputBitmap, PseudoColorFor8BitInfrared);
+            return TransformBitmap(inputBitmap, UsePseudoColorForInfrared ? PseudoColorFor8BitInfrared : GrayScaleFor8BitInfrared);
 
         case BitmapPixelFormat::Gray16:
             // Use pseudo color to render 16 bits frames.

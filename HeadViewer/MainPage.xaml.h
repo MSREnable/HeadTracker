@@ -29,6 +29,8 @@ namespace HeadViewer
         virtual void OnNavigatedFrom(NavigationEventArgs^ e) override;
 
     private:
+        void UsePseudoColor_Toggled(Object^ sender, RoutedEventArgs^ e);
+        void AlternateFrames_Toggled(Object^ sender, RoutedEventArgs^ e);
         void GroupComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
         void SourceComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
         void FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
@@ -56,6 +58,8 @@ namespace HeadViewer
     private:
         // Whether or not we are currently streaming.
         bool m_streaming = false;
+        bool m_processAlternateFrames = false;
+        long m_frameNum;
 
         Agile<Windows::Media::Capture::MediaCapture^> m_mediaCapture;
 
@@ -67,6 +71,5 @@ namespace HeadViewer
         //SimpleLogger^ m_logger;
 
         Windows::Foundation::EventRegistrationToken m_frameArrivedToken;
-
     };
 }
