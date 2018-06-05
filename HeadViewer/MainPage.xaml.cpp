@@ -236,7 +236,8 @@ void MainPage::UpdateFrameSource()
 
     bool enableIrOptions = (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared);
     UsePseudoColor->IsEnabled = enableIrOptions;
-    AlternateFrames->IsEnabled = enableIrOptions;
+    OddFrames->IsEnabled = enableIrOptions;
+    EvenFrames->IsEnabled = enableIrOptions;
 }
 
 task<bool> MainPage::TryInitializeCaptureAsync()
@@ -312,7 +313,10 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
 {
     m_frameNum++;
 
-    if ((m_processAlternateFrames) && (m_frameNum % 2 == 0))
+    bool processFrame = (((m_processEvenFrames) && (m_frameNum % 2 == 0)) || ((m_processOddFrames) && (m_frameNum % 2 == 1)));
+    bool usingIr = (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared);
+
+    if (usingIr && !processFrame)
     {
         return;
     }
@@ -326,6 +330,8 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
     {
         m_frameRenderer->ProcessFrame(frame);
     }
+
+
 }
 
 
@@ -338,10 +344,18 @@ void HeadViewer::MainPage::UsePseudoColor_Toggled(Platform::Object^ sender, Wind
 }
 
 
-void HeadViewer::MainPage::AlternateFrames_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void HeadViewer::MainPage::OddFrames_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
     {
-        m_processAlternateFrames = AlternateFrames->IsEnabled && AlternateFrames->IsOn;
+        m_processOddFrames = OddFrames->IsEnabled && OddFrames->IsOn;
+    }
+}
+
+void HeadViewer::MainPage::EvenFrames_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+    if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
+    {
+        m_processEvenFrames = EvenFrames->IsEnabled && EvenFrames->IsOn;
     }
 }

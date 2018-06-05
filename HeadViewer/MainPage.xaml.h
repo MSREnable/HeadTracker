@@ -30,7 +30,8 @@ namespace HeadViewer
 
     private:
         void UsePseudoColor_Toggled(Object^ sender, RoutedEventArgs^ e);
-        void AlternateFrames_Toggled(Object^ sender, RoutedEventArgs^ e);
+        void OddFrames_Toggled(Object^ sender, RoutedEventArgs^ e);
+        void EvenFrames_Toggled(Object^ sender, RoutedEventArgs^ e);
         void GroupComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
         void SourceComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
         void FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
@@ -58,7 +59,8 @@ namespace HeadViewer
     private:
         // Whether or not we are currently streaming.
         bool m_streaming = false;
-        bool m_processAlternateFrames = false;
+        bool m_processOddFrames = true;
+        bool m_processEvenFrames = true;
         long m_frameNum;
 
         Agile<Windows::Media::Capture::MediaCapture^> m_mediaCapture;

@@ -43,8 +43,9 @@
             <ComboBox Name="FormatComboBox" SelectionChanged="FormatComboBox_SelectionChanged" PlaceholderText="Default format" ItemTemplate="{StaticResource DisplayNameTemplate}"/>
 
             <StackPanel Name="InfraredOptions"  Orientation="Horizontal">
-                <ToggleSwitch Name="UsePseudoColor"  IsOn="False" Toggled="UsePseudoColor_Toggled">Use pseudo color</ToggleSwitch>
-                <ToggleSwitch Name="AlternateFrames" IsOn="False" Toggled="AlternateFrames_Toggled">Show alternate frames</ToggleSwitch>
+                <ToggleSwitch Name="UsePseudoColor"  IsOn="True" Toggled="UsePseudoColor_Toggled">Use pseudo color</ToggleSwitch>
+                <ToggleSwitch Name="OddFrames" IsOn="True" Toggled="OddFrames_Toggled">Show odd frames</ToggleSwitch>
+                <ToggleSwitch Name="EvenFrames" IsOn="True" Toggled="EvenFrames_Toggled">Show even frames</ToggleSwitch>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,10,0,0">
