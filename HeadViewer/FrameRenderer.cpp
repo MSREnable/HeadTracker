@@ -77,7 +77,7 @@ static ColorBGRA ColorRampInterpolation(float value)
     size_t rampSteps = colorRamp.size() - 1;
     float scaled = value * rampSteps;
     int integer = static_cast<int>(scaled);
-    int index = min(static_cast<size_t>(max(0, integer)), rampSteps - 1);
+    int index = std::min(static_cast<size_t>(std::max(0, integer)), rampSteps - 1);
     const ColorBGRA& prev = colorRamp[index];
     const ColorBGRA& next = colorRamp[index + 1];
 

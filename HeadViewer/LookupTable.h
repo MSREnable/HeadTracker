@@ -36,7 +36,7 @@ namespace HeadViewer
         T GetValue(float value)
         {
             int index = static_cast<int>(value * LookupTableSize);
-            index = min(max(0, index), LookupTableSize - 1);
+            index = std::min(std::max(0, index), static_cast<int>(LookupTableSize - 1));
             return m_lookuptable[index];
         }
 

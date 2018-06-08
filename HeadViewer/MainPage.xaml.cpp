@@ -37,6 +37,7 @@ void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
     /// SourceGroup devices enabled or disabled from the system.
     m_groupCollection = ref new SourceGroupCollection(Dispatcher);
     GroupComboBox->ItemsSource = m_groupCollection->FrameSourceGroups;
+    DeserializeFaceLandmarkDataAsync();
 }
 
 void MainPage::OnNavigatedFrom(NavigationEventArgs^ e)
@@ -334,7 +335,6 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
 
 }
 
-
 void HeadViewer::MainPage::UsePseudoColor_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
@@ -358,4 +358,10 @@ void HeadViewer::MainPage::EvenFrames_Toggled(Platform::Object^ sender, Windows:
     {
         m_processEvenFrames = EvenFrames->IsEnabled && EvenFrames->IsOn;
     }
+}
+
+task<void> MainPage::DeserializeFaceLandmarkDataAsync()
+{
+    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> m_shapePredictor;
+    co_return;
 }

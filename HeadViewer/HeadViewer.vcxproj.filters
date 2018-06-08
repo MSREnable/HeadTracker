@@ -59,4 +59,7 @@
   <ItemGroup>
     <Page Include="MainPage.xaml" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\data\shape_predictor_68_face_landmarks.dat" />
+  </ItemGroup>
 </Project>
