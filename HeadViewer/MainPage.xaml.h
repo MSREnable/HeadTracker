@@ -53,9 +53,6 @@ namespace HeadViewer
         task<void> ChangeMediaFormatAsync(FrameFormatModel^ format);
         task<void> UpdateButtonStateAsync();
 
-        task<void> DeserializeFaceLandmarkDataAsync();
-
-
         void Reader_FrameArrived(Windows::Media::Capture::Frames::MediaFrameReader^ reader, Windows::Media::Capture::Frames::MediaFrameArrivedEventArgs^ args);
 
 
@@ -76,9 +73,5 @@ namespace HeadViewer
         //SimpleLogger^ m_logger;
 
         Windows::Foundation::EventRegistrationToken m_frameArrivedToken;
-
-        // dlib stuff
-        dlib::shape_predictor m_shapePredictor;
-
     };
 }

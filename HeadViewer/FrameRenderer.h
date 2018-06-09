@@ -40,7 +40,7 @@ namespace HeadViewer
 
         property bool UsePseudoColorForInfrared;
 
-    private: // Private static methods.
+    private: // Private instance methods.
         /// <summary>
         /// Converts the input frame to BGRA8 premultiplied alpha format and returns the result.
         /// Returns nullptr if the input frame cannot be converted BGRA8 premultiplied alpha.

@@ -13,6 +13,7 @@ using namespace Platform;
 using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
+using namespace Windows::Graphics::Imaging;
 using namespace Windows::Media::Capture;
 using namespace Windows::UI::Core;
 using namespace Windows::UI::Xaml;
@@ -37,7 +38,6 @@ void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
     /// SourceGroup devices enabled or disabled from the system.
     m_groupCollection = ref new SourceGroupCollection(Dispatcher);
     GroupComboBox->ItemsSource = m_groupCollection->FrameSourceGroups;
-    DeserializeFaceLandmarkDataAsync();
 }
 
 void MainPage::OnNavigatedFrom(NavigationEventArgs^ e)
@@ -312,6 +312,16 @@ task<void> MainPage::ChangeMediaFormatAsync(FrameFormatModel^ format)
 
 void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args)
 {
+    // TryAcquireLatestFrame will return the latest frame that has not yet been acquired.
+    // This can return null if there is no such frame, or if the reader is not in the
+    // "Started" state. The latter can occur if a FrameArrived event was in flight
+    // when the reader was stopped.
+    MediaFrameReference^ frame = reader->TryAcquireLatestFrame();
+    if (frame == nullptr)
+    {
+        return;
+    }
+
     m_frameNum++;
 
     bool processFrame = (((m_processEvenFrames) && (m_frameNum % 2 == 0)) || ((m_processOddFrames) && (m_frameNum % 2 == 1)));
@@ -322,17 +332,7 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
         return;
     }
 
-    // TryAcquireLatestFrame will return the latest frame that has not yet been acquired.
-    // This can return null if there is no such frame, or if the reader is not in the
-    // "Started" state. The latter can occur if a FrameArrived event was in flight
-    // when the reader was stopped.
-
-    if (MediaFrameReference^ frame = reader->TryAcquireLatestFrame())
-    {
-        m_frameRenderer->ProcessFrame(frame);
-    }
-
-
+    m_frameRenderer->ProcessFrame(frame);
 }
 
 void HeadViewer::MainPage::UsePseudoColor_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -358,10 +358,4 @@ void HeadViewer::MainPage::EvenFrames_Toggled(Platform::Object^ sender, Windows:
     {
         m_processEvenFrames = EvenFrames->IsEnabled && EvenFrames->IsOn;
     }
-}
-
-task<void> MainPage::DeserializeFaceLandmarkDataAsync()
-{
-    dlib::deserialize("shape_predictor_68_face_landmarks.dat") >> m_shapePredictor;
-    co_return;
 }

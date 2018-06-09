@@ -77,7 +77,7 @@ static ColorBGRA ColorRampInterpolation(float value)
     size_t rampSteps = colorRamp.size() - 1;
     float scaled = value * rampSteps;
     int integer = static_cast<int>(scaled);
-    int index = std::min(static_cast<size_t>(std::max(0, integer)), rampSteps - 1);
+    int index = min(static_cast<size_t>(max(0, integer)), rampSteps - 1);
     const ColorBGRA& prev = colorRamp[index];
     const ColorBGRA& next = colorRamp[index + 1];
 
@@ -172,7 +172,7 @@ static void PseudoColorFor8BitInfrared(int pixelWidth, byte* inputRowBytes, byte
     }
 }
 
-// Maps each pixel in a scanline from a 8 bit infrared value to a pseudo-color pixel.
+// Maps each pixel in a scanline from a 8 bit infrared value to a gray scale pixel.
 static void GrayScaleFor8BitInfrared(int pixelWidth, byte* inputRowBytes, byte* outputRowBytes)
 {
     ColorBGRA* outputRow = reinterpret_cast<ColorBGRA*>(outputRowBytes);
