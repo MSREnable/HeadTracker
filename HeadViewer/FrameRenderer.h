@@ -12,6 +12,7 @@
 #pragma once
 
 #include "LookupTable.h"
+#include "HeadTracker.h"
 
 namespace HeadViewer
 {
@@ -56,6 +57,7 @@ namespace HeadViewer
             Windows::Graphics::Imaging::SoftwareBitmap^ inputBitmap,
             TransformScanline pixelTransformation);
 
+
     private: // Private instance methods.
         /// <summary>
         /// Keep presenting the m_backBuffer until there are no more.
@@ -66,6 +68,7 @@ namespace HeadViewer
         Windows::UI::Xaml::Controls::Image^ m_imageElement;
         Windows::Graphics::Imaging::SoftwareBitmap^ m_backBuffer;
         bool m_taskRunning = false;
+        HeadTracker^ m_headTracker;
 
     };
 } // HeadViewer

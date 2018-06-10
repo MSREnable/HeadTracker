@@ -77,7 +77,7 @@ static ColorBGRA ColorRampInterpolation(float value)
     size_t rampSteps = colorRamp.size() - 1;
     float scaled = value * rampSteps;
     int integer = static_cast<int>(scaled);
-    int index = min(static_cast<size_t>(max(0, integer)), rampSteps - 1);
+    int index = std::min(static_cast<size_t>(std::max(0, integer)), rampSteps - 1);
     const ColorBGRA& prev = colorRamp[index];
     const ColorBGRA& next = colorRamp[index + 1];
 
@@ -186,6 +186,7 @@ FrameRenderer::FrameRenderer(Image^ imageElement)
 {
     m_imageElement = imageElement;
     m_imageElement->Source = ref new SoftwareBitmapSource();
+    m_headTracker = ref new HeadTracker();
 }
 
 Concurrency::task<void> FrameRenderer::DrainBackBufferAsync()
@@ -221,6 +222,7 @@ void FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameRefe
     }
 
     SoftwareBitmap^ softwareBitmap = ConvertToDisplayableImage(frame->VideoMediaFrame);
+    auto result = m_headTracker->ProcessBitmap(softwareBitmap);
     if (softwareBitmap != nullptr)
     {
         // Swap the processed frame to _backBuffer, and trigger the UI thread to render it.
