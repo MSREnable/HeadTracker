@@ -337,10 +337,7 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
 
 void HeadViewer::MainPage::ShowFaceLandmarks_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
-    {
-        m_frameRenderer->ShowFaceLandmarks = ShowFaceLandmarks->IsEnabled && ShowFaceLandmarks->IsOn;
-    }
+    m_frameRenderer->ShowFaceLandmarks = ShowFaceLandmarks->IsEnabled && ShowFaceLandmarks->IsOn;
 }
 
 void HeadViewer::MainPage::UsePseudoColor_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
