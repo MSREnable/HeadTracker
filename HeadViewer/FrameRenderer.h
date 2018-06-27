@@ -40,6 +40,7 @@ namespace HeadViewer
             Windows::Media::Capture::Frames::MediaFrameFormat^ format);
 
         property bool UsePseudoColorForInfrared;
+        property bool ShowFaceLandmarks;
 
     private: // Private instance methods.
         /// <summary>

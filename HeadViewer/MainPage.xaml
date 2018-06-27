@@ -42,6 +42,8 @@
             <TextBlock Text="Format"/>
             <ComboBox Name="FormatComboBox" SelectionChanged="FormatComboBox_SelectionChanged" PlaceholderText="Default format" ItemTemplate="{StaticResource DisplayNameTemplate}"/>
 
+            <ToggleSwitch Name="ShowFaceLandmarks"  IsOn="False" Toggled="ShowFaceLandmarks_Toggled">Show face landmarks</ToggleSwitch>
+
             <StackPanel Name="InfraredOptions"  Orientation="Horizontal">
                 <ToggleSwitch Name="UsePseudoColor"  IsOn="True" Toggled="UsePseudoColor_Toggled">Use pseudo color</ToggleSwitch>
                 <ToggleSwitch Name="OddFrames" IsOn="True" Toggled="OddFrames_Toggled">Show odd frames</ToggleSwitch>

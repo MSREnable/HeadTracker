@@ -222,7 +222,10 @@ void FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameRefe
     }
 
     SoftwareBitmap^ softwareBitmap = ConvertToDisplayableImage(frame->VideoMediaFrame);
-    auto result = m_headTracker->ProcessBitmap(softwareBitmap);
+    if (ShowFaceLandmarks)
+    {
+        auto result = m_headTracker->ProcessBitmap(softwareBitmap);
+    }
     if (softwareBitmap != nullptr)
     {
         // Swap the processed frame to _backBuffer, and trigger the UI thread to render it.

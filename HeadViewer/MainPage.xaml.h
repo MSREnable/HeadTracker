@@ -29,6 +29,7 @@ namespace HeadViewer
         virtual void OnNavigatedFrom(NavigationEventArgs^ e) override;
 
     private:
+        void ShowFaceLandmarks_Toggled(Object^ sender, RoutedEventArgs^ e);
         void UsePseudoColor_Toggled(Object^ sender, RoutedEventArgs^ e);
         void OddFrames_Toggled(Object^ sender, RoutedEventArgs^ e);
         void EvenFrames_Toggled(Object^ sender, RoutedEventArgs^ e);
