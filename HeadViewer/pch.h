@@ -20,6 +20,14 @@ using namespace concurrency;
 private class Debug
 {
 public:
+    static void Write(wchar_t *format, ...)
+    {
+        wchar_t message[1024];
+        va_list args;
+        va_start(args, format);
+        StringCchVPrintf(message, 1024, format, args);
+        OutputDebugString(message);
+    }
     static void WriteLine(wchar_t *format, ...)
     {
         wchar_t message[1024];

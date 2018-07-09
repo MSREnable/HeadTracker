@@ -16,6 +16,7 @@
 
 namespace HeadViewer
 {
+
     // Function type used to map a scanline of pixels to an alternate pixel format.
     typedef std::function<void(int, byte*, byte*)> TransformScanline;
 
@@ -28,7 +29,7 @@ namespace HeadViewer
         /// <summary>
         /// Buffer and render frames.
         /// </summary>
-        void ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame);
+        HeadTrackerResult^ ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame);
 
         /// <summary>
         /// Determines the subtype to request from the MediaFrameReader that will result in

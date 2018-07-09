@@ -214,17 +214,18 @@ Concurrency::task<void> FrameRenderer::DrainBackBufferAsync()
     return task_from_result();
 }
 
-void FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame)
+HeadTrackerResult^ FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame)
 {
+    HeadTrackerResult^ result = nullptr;
     if (frame == nullptr)
     {
-        return;
+        return result;
     }
 
     SoftwareBitmap^ softwareBitmap = ConvertToDisplayableImage(frame->VideoMediaFrame);
     if (ShowFaceLandmarks)
     {
-        auto result = m_headTracker->ProcessBitmap(softwareBitmap);
+        result = m_headTracker->ProcessBitmap(softwareBitmap);
     }
     if (softwareBitmap != nullptr)
     {
@@ -250,6 +251,7 @@ void FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameRefe
             DrainBackBufferAsync();
         }));
     }
+    return result;
 }
 
 String^ FrameRenderer::GetSubtypeForFrameReader(MediaFrameSourceKind kind, MediaFrameFormat^ format)

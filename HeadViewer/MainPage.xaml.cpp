@@ -332,7 +332,13 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
         return;
     }
 
-    m_frameRenderer->ProcessFrame(frame);
+    auto result = m_frameRenderer->ProcessFrame(frame);
+    RotationX->Text = result->RotationX.ToString();
+    RotationY->Text = result->RotationY.ToString();
+    RotationZ->Text = result->RotationZ.ToString();
+    TranslationX->Text = result->TranslationX.ToString();
+    TranslationY->Text = result->TranslationY.ToString();
+    TranslationZ->Text = result->TranslationZ.ToString();
 }
 
 void HeadViewer::MainPage::ShowFaceLandmarks_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)

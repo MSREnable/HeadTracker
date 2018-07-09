@@ -55,6 +55,30 @@
                 <Button Content="Stop" Name="StopButton" IsEnabled="False" Click="StopButton_Click" Margin="10,0,0,0"/>
             </StackPanel>
 
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="1"  Text="Translation"/>
+                <TextBlock Grid.Row="0" Grid.Column="2"  Text="Rotation"/>
+                <TextBlock Grid.Row="1" Grid.Column="0"  Text="X"/>
+                <TextBlock Grid.Row="2" Grid.Column="0"  Text="Y"/>
+                <TextBlock Grid.Row="3" Grid.Column="0"  Text="Z"/>
+                <TextBox Grid.Row="1" Grid.Column="1"  x:Name="TranslationX" />
+                <TextBox Grid.Row="2" Grid.Column="1"  x:Name="TranslationY" />
+                <TextBox Grid.Row="3" Grid.Column="1"  x:Name="TranslationZ" />
+                <TextBox Grid.Row="1" Grid.Column="2"  x:Name="RotationX" />
+                <TextBox Grid.Row="2" Grid.Column="2"  x:Name="RotationY" />
+                <TextBox Grid.Row="3" Grid.Column="2"  x:Name="RotationZ" />
+            </Grid>
         </StackPanel>
 
         <Image Grid.Row="0" Grid.Column="1" Name="PreviewImage" />
