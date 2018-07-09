@@ -1,22 +1,25 @@
 # HeadTracker
 
-HeadTracker relies on the [dlib](dlib.net) library. Rather than compiling from [source](https://github.com/davisking/dlib), the best choice is to install using [vcpkg](https://github.com/Microsoft/vcpkg). 
+HeadTracker relies on the [dlib](dlib.net) library. Rather than compiling from [source](https://github.com/davisking/dlib), the best choice is to install using [vcpkg](https://github.com/Microsoft/vcpkg).
 
 To install vcpkg, in a Powershell Administrator prompt:
-```
+
+```powershell
 git clone https://github.com/Microsoft/vcpkg
 cd vcpkg
 .\bootstrap-vcpkg.bat
-.\vcpkg integrate install
-.\vcpkg integrate powershell
+.\vcpkg.exe integrate install
+.\vcpkg.exe integrate powershell
 ```
 
 Once you have vcpkg installed, you will then need to install dlib
-```
-.\vcpkg install dlib:x64-windows
+
+```powershell
+.\vcpkg.exe install dlib:x64-windows
+.\vcpkg.exe install opencv:x64-windows
 ```
 
-Note: 
+Note:
 dlib requires openblas (among other dependencies). openblas is not supported on x86, so you MUST use the x64-windows option when installing dlib for it to work.
 
 Note:
