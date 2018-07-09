@@ -7,6 +7,7 @@
 #include <dlib/gui_widgets.h>
 #include <dlib/image_io.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/calib3d/calib3d_c.h>
 #include <iostream>
 
 namespace HeadViewer

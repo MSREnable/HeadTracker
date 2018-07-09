@@ -210,11 +210,6 @@ HeadTrackerResult^ HeadTracker::ProcessBitmap(Windows::Graphics::Imaging::Softwa
         return result;
     }
 
-    if (!_validCalibration)
-    {
-        return result;
-    }
-
     full_object_detection shape = m_shapePredictor(img, faces[0]);
 
     result->FaceRect = Windows::Foundation::Rect(faces[0].left(), faces[0].top(), faces[0].width(), faces[0].height());
@@ -237,27 +232,60 @@ HeadTrackerResult^ HeadTracker::ProcessBitmap(Windows::Graphics::Imaging::Softwa
     cv::Mat rotationMatrix;
     cv::Mat translationVector;
 
-    //auto focalLength = GetApproxFocalLength(70, cols, rows);
-    //Debug::WriteLine(L"Focal length = %g\n", focalLength);
-
-    //auto cameraMatrix = GetCameraMatrix(focalLength, cv::Point2f(cols / 2, rows / 2));
-    //DebugPrintMatrix(L"Camera Matrix:", cameraMatrix);
-    //cv::Mat distCoeffs = cv::Mat::zeros(4, 1, cv::DataType<float>::type);
-
-    //std::vector<std::vector<cv::Point3f>> objectPoints;
-    //objectPoints.push_back(m_modelPoints);
-
-    //std::vector<std::vector<cv::Point2f>> calibImagePoints;
-    //calibImagePoints.push_back(imagePoints);
-
-    //cv::calibrateCamera(objectPoints, calibImagePoints, cv::Size(cols, rows), cameraMatrix, distCoeffs, rotationVector, translationVector, CALIB_USE_INTRINSIC_GUESS);
-    //Debug::WriteLine(L"Using Calibration");
-    //DebugPrintMatrix(L"Camera Matrix:", cameraMatrix);
-    //DebugPrintMatrix(L"Dist Coeffs", distCoeffs);
-    //DebugPrintMatrix(L"Rotation Vector", rotationVector);
-    //DebugPrintMatrix(L"Translation Vector", translationVector);
-
     auto imagePoints = GetImagePoints(shape);
+
+    if (!_validCalibration)
+    {
+        auto focalLength = GetApproxFocalLength(80, cols, rows);
+        Debug::WriteLine(L"Focal length = %g\n", focalLength);
+
+        m_cameraMatrix = GetCameraMatrix(focalLength, cv::Point2f(cols / 2, rows / 2));
+        DebugPrintMatrix(L"Camera Matrix:", m_cameraMatrix);
+        m_distortionCoefficients = cv::Mat::zeros(4, 1, cv::DataType<float>::type);
+
+        std::vector<std::vector<cv::Point3f>> objectPoints;
+        objectPoints.push_back(m_modelPoints);
+
+        std::vector<std::vector<cv::Point2f>> calibImagePoints;
+        calibImagePoints.push_back(imagePoints);
+
+        cv::calibrateCamera(objectPoints, calibImagePoints, cv::Size(cols, rows), m_cameraMatrix, m_distortionCoefficients, rotationVector, translationVector, CALIB_USE_INTRINSIC_GUESS);
+        Debug::WriteLine(L"Using Calibration");
+        DebugPrintMatrix(L"Camera Matrix:", m_cameraMatrix);
+        DebugPrintMatrix(L"Dist Coeffs", m_distortionCoefficients);
+        DebugPrintMatrix(L"Rotation Vector", rotationVector);
+        DebugPrintMatrix(L"Translation Vector", translationVector);
+    }
+
+
+    CvPoint3D32f positModelPoints[] = {
+        { 0.0, 0.0, 0.0 },
+        { 0.0, -330.0, -65.0 },
+        { -225.0, 170.0, -135.0 },
+        { 225.0, 170.0, -135.0 },
+        { -150.0, -150.0, -125.0 },
+        { 150.0, -150.0, -125.0 }
+    };
+    CvPoint2D32f positImagePoints[6];
+    auto criteria = cvTermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 100, 0.1f);
+    for (int i = 0; i < 6; i++)
+    {
+        positImagePoints[i].x = imagePoints[i].x;
+        positImagePoints[i].y = imagePoints[i].y;
+    }
+
+    float rot_mat[9];
+    float trans_vec[3];
+    auto positObject = cvCreatePOSITObject(positModelPoints, 6);
+    cvPOSIT(positObject, positImagePoints, GetApproxFocalLength(80, cols, rows), criteria, rot_mat, trans_vec);
+    cvReleasePOSITObject(&positObject);
+    cv::Mat rotation_matrix = cv::Mat(3, 3, CV_32F, rot_mat);
+    cv::Mat rotation_vector = cv::Mat(3, 1, CV_32F);
+    cv::Mat translation_vector = cv::Mat(3, 1, CV_32F, trans_vec);
+    Rodrigues(rotation_matrix, rotation_vector);
+    Debug::WriteLine(L"Using POSIT");
+    DebugPrintMatrix(L"Rotation Vector:", rotation_vector);
+    Debug::WriteLine(L"Translation Vector: [%g, %g, %g]", trans_vec[0], trans_vec[1], trans_vec[2]);
 
     cv::solvePnP(m_modelPoints, imagePoints, m_cameraMatrix, m_distortionCoefficients, rotationVector, translationVector);
     Debug::WriteLine(L"Using solvePnP");
@@ -266,17 +294,21 @@ HeadTrackerResult^ HeadTracker::ProcessBitmap(Windows::Graphics::Imaging::Softwa
     DebugPrintMatrix(L"Rotation Vector", rotationVector);
     DebugPrintMatrix(L"Translation Vector", translationVector);
 
-    float ipd = ComputeIPDInPixels(shape);
-    float focalLengthMM = m_cameraMatrix.at<double>(0, 0) * AVERAGE_IPD / ipd;
-    float userDistanceMM = translationVector.at<double>(2, 0) * AVERAGE_IPD / ipd;
-    Debug::WriteLine(L"focalLengthMM = %g, userDistanceMM=%g", focalLengthMM, userDistanceMM);
+    //float ipd = ComputeIPDInPixels(shape);
+    //float focalLengthMM = m_cameraMatrix.at<double>(0, 0) * AVERAGE_IPD / ipd;
+    //float userDistanceMM = translationVector.at<double>(2, 0) * AVERAGE_IPD / ipd;
+    //Debug::WriteLine(L"focalLengthMM = %g, userDistanceMM=%g", focalLengthMM, userDistanceMM);
 
     std::vector<cv::Point3f> noseEndPoint3D;
     std::vector<cv::Point2f> noseEndPoint2D;
-    noseEndPoint3D.push_back(cv::Point3f(0, 0, translationVector.at<double>(2, 0)/2));
+    //noseEndPoint3D.push_back(cv::Point3f(0, 0, translationVector.at<double>(2, 0) / 2));
+    noseEndPoint3D.push_back(cv::Point3f(0, 0, 1000));
 
     cv::projectPoints(noseEndPoint3D, rotationVector, translationVector, m_cameraMatrix, m_distortionCoefficients, noseEndPoint2D);
     cv::line(imgBGR, imagePoints[0], noseEndPoint2D[0], cv::Scalar(255, 0, 0), 2);
+
+    cv::projectPoints(noseEndPoint3D, rotation_vector, translation_vector, m_cameraMatrix, m_distortionCoefficients, noseEndPoint2D);
+    cv::line(imgBGR, imagePoints[0], noseEndPoint2D[0], cv::Scalar(255, 255, 0), 2);
 
     cv::cvtColor(imgBGR, imgBGRA, CV_BGR2BGRA, 4);
 

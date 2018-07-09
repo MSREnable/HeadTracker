@@ -26,6 +26,8 @@ using namespace Windows::UI::Xaml::Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
+#pragma optimize("", off)
+
 MainPage::MainPage()
 {
 	InitializeComponent();
@@ -333,12 +335,20 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
     }
 
     auto result = m_frameRenderer->ProcessFrame(frame);
-    RotationX->Text = result->RotationX.ToString();
-    RotationY->Text = result->RotationY.ToString();
-    RotationZ->Text = result->RotationZ.ToString();
-    TranslationX->Text = result->TranslationX.ToString();
-    TranslationY->Text = result->TranslationY.ToString();
-    TranslationZ->Text = result->TranslationZ.ToString();
+    if (result == nullptr)
+    {
+        return;
+    }
+
+    Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this, result]()
+    {
+        RotationX->Text = result->RotationX.ToString();
+        RotationY->Text = result->RotationY.ToString();
+        RotationZ->Text = result->RotationZ.ToString();
+        TranslationX->Text = result->TranslationX.ToString();
+        TranslationY->Text = result->TranslationY.ToString();
+        TranslationZ->Text = result->TranslationZ.ToString();
+    }));
 }
 
 void HeadViewer::MainPage::ShowFaceLandmarks_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -370,3 +380,4 @@ void HeadViewer::MainPage::EvenFrames_Toggled(Platform::Object^ sender, Windows:
         m_processEvenFrames = EvenFrames->IsEnabled && EvenFrames->IsOn;
     }
 }
+#pragma optimize("", on)
