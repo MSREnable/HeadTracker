@@ -7,7 +7,7 @@
 
 #include "MainPage.g.h"
 #include "FrameSourceViewModels.h"
-#include "FrameRenderer.h"
+#include "FrameReader.h"
 
 using namespace Windows::Devices::Enumeration;
 using namespace Windows::Media::Capture::Frames;
@@ -38,20 +38,15 @@ namespace HeadViewer
         void FormatComboBox_SelectionChanged(Object^ sender, SelectionChangedEventArgs^ e);
         void StopButton_Click(Object^ sender, RoutedEventArgs^ e);
         void StartButton_Click(Object^ sender, RoutedEventArgs^ e);
-
+        void CalibrateButton_Click(Object^ sender, RoutedEventArgs^ e);
+        
     private:
-        void DisposeMediaCapture();
-        void UpdateFrameSource();
-
         task<void> HandleNavigatedFrom();
         task<void> OnGroupSelectionChanged();
         task<void> OnSourceSelectionChanged();
         task<void> OnFormatSelectionChanged();
         task<void> StartReaderAsync();
         task<void> StopReaderAsync();
-        task<void> CreateReaderAsync();
-        task<bool> TryInitializeCaptureAsync();
-        task<void> ChangeMediaFormatAsync(FrameFormatModel^ format);
         task<void> UpdateButtonStateAsync();
 
         void Reader_FrameArrived(Windows::Media::Capture::Frames::MediaFrameReader^ reader, Windows::Media::Capture::Frames::MediaFrameArrivedEventArgs^ args);
@@ -64,15 +59,10 @@ namespace HeadViewer
         bool m_processEvenFrames = true;
         long m_frameNum;
 
-        Agile<Windows::Media::Capture::MediaCapture^> m_mediaCapture;
-
-        MediaFrameSource^ m_source;
-        MediaFrameReader^ m_reader;
-        FrameRenderer^ m_frameRenderer;
+        FrameReader^ m_frameReader;
 
         SourceGroupCollection^ m_groupCollection;
         //SimpleLogger^ m_logger;
 
-        Windows::Foundation::EventRegistrationToken m_frameArrivedToken;
     };
 }

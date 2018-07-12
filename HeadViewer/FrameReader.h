@@ -13,6 +13,12 @@
 
 #include "LookupTable.h"
 #include "HeadTracker.h"
+#include <MemoryBuffer.h>
+
+using namespace Windows::Foundation;
+using namespace Windows::Foundation::Collections;
+using namespace Windows::Media::Capture;
+using namespace Windows::Media::Capture::Frames;
 
 namespace HeadViewer
 {
@@ -20,12 +26,22 @@ namespace HeadViewer
     // Function type used to map a scanline of pixels to an alternate pixel format.
     typedef std::function<void(int, byte*, byte*)> TransformScanline;
 
-    private ref class FrameRenderer sealed
+    private ref class FrameReader sealed
     {
     public:
-        FrameRenderer(Windows::UI::Xaml::Controls::Image^ image);
+        FrameReader(Windows::UI::Xaml::Controls::Image^ image);
 
     public: // Public methods.
+        IAsyncOperation<MediaCapture^>^ TryInitializeMediaCaptureAsync(MediaFrameSourceGroup^ sourceGroup);
+
+        IAsyncOperation<IVectorView<MediaFrameFormat^>^>^ GetSupportedFormats(MediaFrameSourceGroup^ sourceGroup, MediaFrameSourceInfo^ sourceInfo);
+            
+        IAsyncOperation<bool>^ StartStreamingAsync(MediaFrameSourceGroup^ sourceGroup, 
+                                                   MediaFrameSourceInfo^ sourceInfo, 
+                                                   MediaFrameFormat^ frameFormat,
+                                                   TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>^ frameArrivedEvent);
+        IAsyncOperation<bool>^ StopStreamingAsync();
+
         /// <summary>
         /// Buffer and render frames.
         /// </summary>
@@ -42,8 +58,8 @@ namespace HeadViewer
 
         property bool UsePseudoColorForInfrared;
         property bool ShowFaceLandmarks;
+        property bool IsStreaming;
 
-    private: // Private instance methods.
         /// <summary>
         /// Converts the input frame to BGRA8 premultiplied alpha format and returns the result.
         /// Returns nullptr if the input frame cannot be converted BGRA8 premultiplied alpha.
@@ -51,6 +67,7 @@ namespace HeadViewer
         Windows::Graphics::Imaging::SoftwareBitmap^ ConvertToDisplayableImage(
             Windows::Media::Capture::Frames::VideoMediaFrame^ inputFrame);
 
+    private: // Private instance methods.
         /// <summary>
         /// Transforms pixels of inputBitmap to an output bitmap using the supplied pixel transformation method.
         /// Returns nullptr if translation fails.
@@ -65,6 +82,12 @@ namespace HeadViewer
         /// Keep presenting the m_backBuffer until there are no more.
         /// </summary>
         Concurrency::task<void> DrainBackBufferAsync();
+        Concurrency::task<bool> StartStreamingInternalAsync(
+            MediaFrameSourceGroup^ sourceGroup,
+            MediaFrameSourceInfo^ sourceInfo,
+            MediaFrameFormat^ frameFormat,
+            TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>^ frameArrivedEvent);
+        Concurrency::task<bool> StopStreamingInternalAsync();
 
     private: // Private data.
         Windows::UI::Xaml::Controls::Image^ m_imageElement;
@@ -72,5 +95,11 @@ namespace HeadViewer
         bool m_taskRunning = false;
         HeadTracker^ m_headTracker;
 
+        Agile<Windows::Media::Capture::MediaCapture^> m_mediaCapture;
+
+        Windows::Media::Capture::Frames::MediaFrameSource^ m_source;
+        Windows::Media::Capture::Frames::MediaFrameReader^ m_reader;
+        
+        Windows::Foundation::EventRegistrationToken m_frameArrivedToken;
     };
 } // HeadViewer

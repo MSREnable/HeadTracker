@@ -12,7 +12,7 @@
 #include "pch.h"
 #include <cmath>
 #include <MemoryBuffer.h>
-#include "FrameRenderer.h"
+#include "FrameReader.h"
 
 using namespace HeadViewer;
 
@@ -21,10 +21,13 @@ using namespace Platform;
 using namespace Microsoft::WRL;
 using namespace Windows::Foundation;
 using namespace Windows::Graphics::Imaging;
+using namespace Windows::Media::Capture;
 using namespace Windows::Media::Capture::Frames;
 using namespace Windows::Media::MediaProperties;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Media::Imaging;
+
+#pragma optimize("", off)
 
 #pragma region Low-level operations on reference pointers
 
@@ -182,14 +185,152 @@ static void GrayScaleFor8BitInfrared(int pixelWidth, byte* inputRowBytes, byte* 
     }
 }
 
-FrameRenderer::FrameRenderer(Image^ imageElement)
+FrameReader::FrameReader(Image^ imageElement)
 {
     m_imageElement = imageElement;
     m_imageElement->Source = ref new SoftwareBitmapSource();
     m_headTracker = ref new HeadTracker();
 }
 
-Concurrency::task<void> FrameRenderer::DrainBackBufferAsync()
+IAsyncOperation<MediaCapture^>^ FrameReader::TryInitializeMediaCaptureAsync(MediaFrameSourceGroup^ sourceGroup)
+{
+    return create_async([this, sourceGroup]() -> task<MediaCapture^> {
+        // Create a new media capture object.
+        auto mediaCapture = ref new MediaCapture();
+
+        auto settings = ref new MediaCaptureInitializationSettings();
+
+        // Select the source we will be reading from.
+        settings->SourceGroup = sourceGroup;
+
+        // This media capture has exclusive control of the source.
+        settings->SharingMode = MediaCaptureSharingMode::ExclusiveControl;
+
+        // Set to CPU to ensure frames always contain CPU SoftwareBitmap images,
+        // instead of preferring GPU D3DSurface images.
+        settings->MemoryPreference = MediaCaptureMemoryPreference::Cpu;
+
+        // Capture only video. Audio device will not be initialized.
+        settings->StreamingCaptureMode = StreamingCaptureMode::Video;
+
+        // Initialize MediaCapture with the specified group.
+        // This must occur on the UI thread because some device families
+        // (such as Xbox) will prompt the user to grant consent for the
+        // app to access cameras.
+        // This can raise an exception if the source no longer exists,
+        // or if the source could not be initialized.
+
+
+        try
+        {
+            auto mediaInitTask = create_task(mediaCapture->InitializeAsync(settings));
+            auto initializedCapture = mediaInitTask.then([this, mediaCapture, sourceGroup]() -> MediaCapture^
+            {
+                Debug::WriteLine(L"Successfully initialized MediaCapture for %s", sourceGroup->DisplayName->Data());
+                return mediaCapture;
+            });
+            return initializedCapture;
+        }
+        catch (Exception^ exception)
+        {
+            Debug::WriteLine(L"Failed to initialize media capture: %s", exception->Message->Data());
+            return create_task([]() -> MediaCapture^ { return nullptr; });
+        }
+    });
+}
+
+IAsyncOperation<IVectorView<MediaFrameFormat^>^>^ FrameReader::GetSupportedFormats(MediaFrameSourceGroup^ sourceGroup, MediaFrameSourceInfo^ sourceInfo)
+{
+    return create_async([this, sourceGroup, sourceInfo]() -> task<IVectorView<MediaFrameFormat^>^>
+    {
+        auto mediaCaptureTask = create_task(TryInitializeMediaCaptureAsync(sourceGroup));
+        auto formatsTask = mediaCaptureTask.then([this, sourceInfo](MediaCapture^ mediaCapture)-> IVectorView<MediaFrameFormat^>^ 
+        {
+            auto source = mediaCapture->FrameSources->Lookup(sourceInfo->Id);
+            return source->SupportedFormats;
+        });
+        return formatsTask;
+    });
+}
+
+IAsyncOperation<bool>^ FrameReader::StartStreamingAsync(MediaFrameSourceGroup^ sourceGroup,
+    MediaFrameSourceInfo^ sourceInfo,
+    MediaFrameFormat^ frameFormat,
+    TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>^ frameArrivedEvent)
+{
+    return create_async([this, sourceGroup, sourceInfo, frameFormat, frameArrivedEvent]() -> task<bool>
+    {
+        return StartStreamingInternalAsync(sourceGroup, sourceInfo, frameFormat, frameArrivedEvent);
+    });
+}
+
+task<bool> FrameReader::StartStreamingInternalAsync(
+    MediaFrameSourceGroup^ sourceGroup,
+    MediaFrameSourceInfo^ sourceInfo,
+    MediaFrameFormat^ frameFormat,
+    TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>^ frameArrivedEvent)
+{
+    if (IsStreaming)
+    {
+        co_await StopStreamingInternalAsync();
+    }
+
+    auto mediaCapture = co_await TryInitializeMediaCaptureAsync(sourceGroup);
+
+    String^ requestedSubtype = FrameReader::GetSubtypeForFrameReader(sourceInfo->SourceKind, frameFormat);
+    if (requestedSubtype == nullptr)
+    {
+        co_return false;
+    }
+
+    if (!mediaCapture->FrameSources->HasKey(sourceInfo->Id))
+    {
+        co_return false;
+    }
+
+    auto source = mediaCapture->FrameSources->Lookup(sourceInfo->Id);
+    auto reader = co_await mediaCapture->CreateFrameReaderAsync(source, requestedSubtype);
+    auto eventToken = reader->FrameArrived += frameArrivedEvent;
+    auto result = co_await reader->StartAsync();
+    if (result != MediaFrameReaderStartStatus::Success)
+    {
+        co_return false;
+    }
+    m_mediaCapture = mediaCapture;
+    m_source = source;
+    m_reader = reader;
+    m_frameArrivedToken = eventToken;
+    IsStreaming = true;
+    co_return true;
+}
+
+
+IAsyncOperation<bool>^ FrameReader::StopStreamingAsync()
+{
+    return create_async([this]() -> task<bool>
+    {
+        return StopStreamingInternalAsync();
+    });
+}
+
+Concurrency::task<bool> FrameReader::StopStreamingInternalAsync()
+{
+    if (!IsStreaming)
+    {
+        co_return true;
+    }
+
+    co_await m_reader->StopAsync();
+    m_reader->FrameArrived -= m_frameArrivedToken;
+    m_frameArrivedToken.Value = 0;
+    m_reader = nullptr;
+    m_source = nullptr;
+    m_mediaCapture = nullptr;
+    IsStreaming = false;
+    co_return true;
+}
+
+Concurrency::task<void> FrameReader::DrainBackBufferAsync()
 {
     // Keep draining frames from the backbuffer until the backbuffer is empty.
     SoftwareBitmap^ latestBitmap = InterlockedExchangeRefPointer(&m_backBuffer, nullptr);
@@ -214,7 +355,7 @@ Concurrency::task<void> FrameRenderer::DrainBackBufferAsync()
     return task_from_result();
 }
 
-HeadTrackerResult^ FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame)
+HeadTrackerResult^ FrameReader::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame)
 {
     HeadTrackerResult^ result = nullptr;
     if (frame == nullptr)
@@ -254,7 +395,7 @@ HeadTrackerResult^ FrameRenderer::ProcessFrame(Windows::Media::Capture::Frames::
     return result;
 }
 
-String^ FrameRenderer::GetSubtypeForFrameReader(MediaFrameSourceKind kind, MediaFrameFormat^ format)
+String^ FrameReader::GetSubtypeForFrameReader(MediaFrameSourceKind kind, MediaFrameFormat^ format)
 {
     // Note that media encoding subtypes may differ in case.
     // https://docs.microsoft.com/en-us/uwp/api/Windows.Media.MediaProperties.MediaEncodingSubtypes
@@ -282,7 +423,7 @@ String^ FrameRenderer::GetSubtypeForFrameReader(MediaFrameSourceKind kind, Media
     }
 }
 
-SoftwareBitmap^ FrameRenderer::ConvertToDisplayableImage(VideoMediaFrame^ inputFrame)
+SoftwareBitmap^ FrameReader::ConvertToDisplayableImage(VideoMediaFrame^ inputFrame)
 {
     if (inputFrame == nullptr)
     {
@@ -361,7 +502,7 @@ SoftwareBitmap^ FrameRenderer::ConvertToDisplayableImage(VideoMediaFrame^ inputF
     return nullptr;
 }
 
-SoftwareBitmap^ FrameRenderer::TransformBitmap(SoftwareBitmap^ inputBitmap, TransformScanline pixelTransformation)
+SoftwareBitmap^ FrameReader::TransformBitmap(SoftwareBitmap^ inputBitmap, TransformScanline pixelTransformation)
 {
     // XAML Image control only supports premultiplied Bgra8 format.
     SoftwareBitmap^ outputBitmap = ref new SoftwareBitmap(
@@ -409,3 +550,5 @@ SoftwareBitmap^ FrameRenderer::TransformBitmap(SoftwareBitmap^ inputBitmap, Tran
 
     return outputBitmap;
 }
+
+#pragma optimize("", on)

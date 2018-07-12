@@ -53,6 +53,7 @@
             <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,10,0,0">
                 <Button Content="Start" Name="StartButton" IsEnabled="False" Click="StartButton_Click"/>
                 <Button Content="Stop" Name="StopButton" IsEnabled="False" Click="StopButton_Click" Margin="10,0,0,0"/>
+                <Button Content="Calibrate" Name="CalibrateButton" IsEnabled="True" Click="CalibrateButton_Click" Margin="10,0,0,0"/>
             </StackPanel>
 
             <Grid Margin="5">
