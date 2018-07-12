@@ -53,6 +53,7 @@ task<void> MainPage::HandleNavigatedFrom()
 {
     delete m_groupCollection;
     m_frameReader->StopStreamingAsync();
+    co_return;
 }
 
 task<void> MainPage::UpdateButtonStateAsync()
@@ -165,6 +166,7 @@ task<void> MainPage::StartReaderAsync()
     if (result)
     {
         m_streaming = true;
+        m_sourceInfo = source;
         UpdateButtonStateAsync();
     }
 }
@@ -172,6 +174,7 @@ task<void> MainPage::StartReaderAsync()
 task<void> MainPage::StopReaderAsync()
 {
     m_streaming = false;
+    m_sourceInfo = nullptr;
     co_await m_frameReader->StopStreamingAsync();
     UpdateButtonStateAsync();
 }
@@ -190,13 +193,13 @@ void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEv
 
     m_frameNum++;
 
-    //bool processFrame = (((m_processEvenFrames) && (m_frameNum % 2 == 0)) || ((m_processOddFrames) && (m_frameNum % 2 == 1)));
-    //bool usingIr = (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared);
+    bool processFrame = (((m_processEvenFrames) && (m_frameNum % 2 == 0)) || ((m_processOddFrames) && (m_frameNum % 2 == 1)));
+    bool usingIr = (m_sourceInfo->SourceKind == MediaFrameSourceKind::Infrared);
 
-    //if (usingIr && !processFrame)
-    //{
-    //    return;
-    //}
+    if (usingIr && !processFrame)
+    {
+        return;
+    }
 
     auto bitmap = m_frameReader->ConvertToDisplayableImage(frame->VideoMediaFrame);
 
@@ -220,26 +223,26 @@ void HeadViewer::MainPage::ShowFaceLandmarks_Toggled(Platform::Object^ sender, W
 
 void HeadViewer::MainPage::UsePseudoColor_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    //if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
-    //{
-    //    m_frameReader->UsePseudoColorForInfrared = UsePseudoColor->IsEnabled && UsePseudoColor->IsOn;
-    //}
+    if ((m_sourceInfo != nullptr) && (m_sourceInfo->SourceKind == MediaFrameSourceKind::Infrared))
+    {
+        m_frameReader->UsePseudoColorForInfrared = UsePseudoColor->IsEnabled && UsePseudoColor->IsOn;
+    }
 }
 
 
 void HeadViewer::MainPage::OddFrames_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    //if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
-    //{
-    //    m_processOddFrames = OddFrames->IsEnabled && OddFrames->IsOn;
-    //}
+    if ((m_sourceInfo != nullptr) && (m_sourceInfo->SourceKind == MediaFrameSourceKind::Infrared))
+    {
+        m_processOddFrames = OddFrames->IsEnabled && OddFrames->IsOn;
+    }
 }
 
 void HeadViewer::MainPage::EvenFrames_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    //if ((m_source != nullptr) && (m_source->Info->SourceKind == MediaFrameSourceKind::Infrared))
-    //{
-    //    m_processEvenFrames = EvenFrames->IsEnabled && EvenFrames->IsOn;
-    //}
+    if ((m_sourceInfo != nullptr) && (m_sourceInfo->SourceKind == MediaFrameSourceKind::Infrared))
+    {
+        m_processEvenFrames = EvenFrames->IsEnabled && EvenFrames->IsOn;
+    }
 }
 #pragma optimize("", on)

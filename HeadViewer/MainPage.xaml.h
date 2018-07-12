@@ -59,10 +59,10 @@ namespace HeadViewer
         bool m_processEvenFrames = true;
         long m_frameNum;
 
+        MediaFrameSourceInfo^ m_sourceInfo;
         FrameReader^ m_frameReader;
 
         SourceGroupCollection^ m_groupCollection;
         //SimpleLogger^ m_logger;
-
     };
 }
