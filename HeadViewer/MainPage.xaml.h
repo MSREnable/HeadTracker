@@ -49,7 +49,7 @@ namespace HeadViewer
         task<void> StopReaderAsync();
         task<void> UpdateButtonStateAsync();
 
-        void Reader_FrameArrived(Windows::Media::Capture::Frames::MediaFrameReader^ reader, Windows::Media::Capture::Frames::MediaFrameArrivedEventArgs^ args);
+        void OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args);
 
 
     private:

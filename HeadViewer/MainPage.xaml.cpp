@@ -33,7 +33,8 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
 	InitializeComponent();
-    m_frameReader = ref new FrameReader(PreviewImage);
+    PreviewImage->Source = ref new SoftwareBitmapSource();
+    m_frameReader = ref new FrameReader();
 }
 
 void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
@@ -143,7 +144,22 @@ void MainPage::StopButton_Click(Object^ sender, RoutedEventArgs^ e)
 
 void MainPage::CalibrateButton_Click(Object^ sender, RoutedEventArgs^ e)
 {
-    Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(CalibrationPage::typeid));
+    // TODO: Cleanup this repeated getting of combo items
+    auto groupModel = dynamic_cast<FrameSourceGroupModel^>(GroupComboBox->SelectedItem);
+    auto sourceModel = dynamic_cast<FrameSourceInfoModel^>(SourceComboBox->SelectedItem);
+    auto formatModel = dynamic_cast<FrameFormatModel^>(FormatComboBox->SelectedItem);
+
+    if ((groupModel == nullptr) || (sourceModel == nullptr) || (formatModel == nullptr))
+    {
+        return;
+    }
+
+    auto calibrationParams = ref new CalibrationPageParams();
+    calibrationParams->SourceGroup = groupModel->SourceGroup;
+    calibrationParams->SourceInfo = sourceModel->SourceInfo;
+    calibrationParams->FrameFormat = formatModel->Format;
+
+    Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(CalibrationPage::typeid), calibrationParams);
 }
 
 task<void> MainPage::StartReaderAsync()
@@ -159,7 +175,7 @@ task<void> MainPage::StartReaderAsync()
     auto group = groupModel->SourceGroup;
     auto source = sourceModel->SourceInfo;
     auto format = formatModel->Format;
-    auto frameHandler = ref new TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>(this, &MainPage::Reader_FrameArrived);
+    auto frameHandler = ref new TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>(this, &MainPage::OnFrameArrived);
 
     auto result = co_await m_frameReader->StartStreamingAsync(group, source, format, frameHandler);
 
@@ -179,7 +195,7 @@ task<void> MainPage::StopReaderAsync()
     UpdateButtonStateAsync();
 }
 
-void MainPage::Reader_FrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args)
+void MainPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args)
 {
     // TryAcquireLatestFrame will return the latest frame that has not yet been acquired.
     // This can return null if there is no such frame, or if the reader is not in the

@@ -29,7 +29,7 @@ namespace HeadViewer
     private ref class FrameReader sealed
     {
     public:
-        FrameReader(Windows::UI::Xaml::Controls::Image^ image);
+        FrameReader();
 
     public: // Public methods.
         IAsyncOperation<MediaCapture^>^ TryInitializeMediaCaptureAsync(MediaFrameSourceGroup^ sourceGroup);
@@ -41,11 +41,6 @@ namespace HeadViewer
                                                    MediaFrameFormat^ frameFormat,
                                                    TypedEventHandler<MediaFrameReader^, MediaFrameArrivedEventArgs^>^ frameArrivedEvent);
         IAsyncOperation<bool>^ StopStreamingAsync();
-
-        /// <summary>
-        /// Buffer and render frames.
-        /// </summary>
-        HeadTrackerResult^ ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame);
 
         /// <summary>
         /// Determines the subtype to request from the MediaFrameReader that will result in
@@ -81,7 +76,6 @@ namespace HeadViewer
         /// <summary>
         /// Keep presenting the m_backBuffer until there are no more.
         /// </summary>
-        Concurrency::task<void> DrainBackBufferAsync();
         Concurrency::task<bool> StartStreamingInternalAsync(
             MediaFrameSourceGroup^ sourceGroup,
             MediaFrameSourceInfo^ sourceInfo,

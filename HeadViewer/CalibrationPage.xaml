@@ -6,24 +6,50 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="Page_Loaded">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="OnPageLoaded">
 
-    <Grid x:Name="CalibrationGrid">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="100"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="100"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="100"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="100"/>
-        </Grid.ColumnDefinitions>
+    <Grid>
+        <Grid x:Name="CalibrationResults" Visibility="Collapsed">
+            <Grid x:Name="CalibrationImages">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <local:CalibrationPointViewer Grid.Row="0" Grid.Column="0" />
+                <local:CalibrationPointViewer Grid.Row="0" Grid.Column="1" />
+                <local:CalibrationPointViewer Grid.Row="0" Grid.Column="2" />
+                <local:CalibrationPointViewer Grid.Row="1" Grid.Column="0" />
+                <local:CalibrationPointViewer Grid.Row="1" Grid.Column="1" />
+                <local:CalibrationPointViewer Grid.Row="1" Grid.Column="2" />
+                <local:CalibrationPointViewer Grid.Row="2" Grid.Column="0" />
+                <local:CalibrationPointViewer Grid.Row="2" Grid.Column="1" />
+                <local:CalibrationPointViewer Grid.Row="2" Grid.Column="2" />
+            </Grid>
+        </Grid>
+        
+        <Grid x:Name="CalibrationGrid" Visibility="Visible">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="100"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="100"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="100"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
 
-        <Ellipse x:Name="CalibrationDot" Grid.Row="0" Grid.Column="0" Fill="IndianRed" Visibility="Collapsed"/>
+            <Ellipse x:Name="CalibrationDot" Grid.Row="0" Grid.Column="0" Fill="IndianRed" Visibility="Collapsed"/>
+        </Grid>
     </Grid>
 </Page>

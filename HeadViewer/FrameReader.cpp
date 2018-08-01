@@ -185,10 +185,8 @@ static void GrayScaleFor8BitInfrared(int pixelWidth, byte* inputRowBytes, byte* 
     }
 }
 
-FrameReader::FrameReader(Image^ imageElement)
+FrameReader::FrameReader()
 {
-    m_imageElement = imageElement;
-    m_imageElement->Source = ref new SoftwareBitmapSource();
     m_headTracker = ref new HeadTracker();
 }
 
@@ -328,71 +326,6 @@ Concurrency::task<bool> FrameReader::StopStreamingInternalAsync()
     m_mediaCapture = nullptr;
     IsStreaming = false;
     co_return true;
-}
-
-Concurrency::task<void> FrameReader::DrainBackBufferAsync()
-{
-    // Keep draining frames from the backbuffer until the backbuffer is empty.
-    SoftwareBitmap^ latestBitmap = InterlockedExchangeRefPointer(&m_backBuffer, nullptr);
-    if (latestBitmap != nullptr)
-    {
-        if (SoftwareBitmapSource^ imageSource = dynamic_cast<SoftwareBitmapSource^>(m_imageElement->Source))
-        {
-            return create_task(imageSource->SetBitmapAsync(latestBitmap))
-                .then([this]()
-            {
-                return DrainBackBufferAsync();
-            }, task_continuation_context::use_current());
-        }
-    }
-
-    // To avoid a race condition against ProcessFrame, we cannot let any other
-    // tasks run on the UI thread between point that the InterlockedExchangeRefPointer
-    // reports that there is no more work, and we clear the m_taskRunning flag on
-    // the UI thread.
-    m_taskRunning = false;
-
-    return task_from_result();
-}
-
-HeadTrackerResult^ FrameReader::ProcessFrame(Windows::Media::Capture::Frames::MediaFrameReference^ frame)
-{
-    HeadTrackerResult^ result = nullptr;
-    if (frame == nullptr)
-    {
-        return result;
-    }
-
-    SoftwareBitmap^ softwareBitmap = ConvertToDisplayableImage(frame->VideoMediaFrame);
-    if (ShowFaceLandmarks)
-    {
-        result = m_headTracker->ProcessBitmap(softwareBitmap);
-    }
-    if (softwareBitmap != nullptr)
-    {
-        // Swap the processed frame to _backBuffer, and trigger the UI thread to render it.
-        softwareBitmap = InterlockedExchangeRefPointer(&m_backBuffer, softwareBitmap);
-
-        // UI thread always resets m_backBuffer before using it. Unused bitmap should be disposed.
-        delete softwareBitmap;
-
-        // Changes to the XAML ImageElement must happen in the UI thread, via the CoreDispatcher.
-        m_imageElement->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-            ref new Windows::UI::Core::DispatchedHandler([this]()
-        {
-            // Don't let two copies of this task run at the same time.
-            if (m_taskRunning)
-            {
-                return;
-            }
-
-            m_taskRunning = true;
-
-            // Keep draining frames from the backbuffer until the backbuffer is empty.
-            DrainBackBufferAsync();
-        }));
-    }
-    return result;
 }
 
 String^ FrameReader::GetSubtypeForFrameReader(MediaFrameSourceKind kind, MediaFrameFormat^ format)

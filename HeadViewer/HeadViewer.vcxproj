@@ -67,8 +67,12 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CalibrationEntry.h" />
     <ClInclude Include="CalibrationPage.xaml.h">
       <DependentUpon>CalibrationPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="CalibrationPointViewer.xaml.h">
+      <DependentUpon>CalibrationPointViewer.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="FrameReader.h" />
     <ClInclude Include="FrameSourceViewModels.h" />
@@ -91,6 +95,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="CalibrationPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="CalibrationPointViewer.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Include="MainPage.xaml">
@@ -127,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="CalibrationPage.xaml.cpp">
       <DependentUpon>CalibrationPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="CalibrationPointViewer.xaml.cpp">
+      <DependentUpon>CalibrationPointViewer.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="FrameReader.cpp" />
     <ClCompile Include="FrameSourceViewModels.cpp" />
