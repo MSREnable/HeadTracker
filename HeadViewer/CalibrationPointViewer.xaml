@@ -24,6 +24,9 @@
             <Button Click="OnNextClicked">
                 <SymbolIcon Symbol="Next"/>
             </Button>
+            <TextBlock x:Name="CurFrame" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
+            <TextBlock Text=" of " HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <TextBlock x:Name="TotalFrames" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </StackPanel>
     </StackPanel>
 </UserControl>

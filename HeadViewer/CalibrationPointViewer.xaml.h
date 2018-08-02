@@ -35,6 +35,9 @@ namespace HeadViewer
                 m_bitmaps = value->Bitmaps;
                 m_curBitmap = 0;
                 m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap));
+                
+                TotalFrames->Text = m_bitmaps->Size.ToString();
+                CurFrame->Text = m_curBitmap.ToString();
             }
         }
 
