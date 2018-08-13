@@ -7,6 +7,7 @@
 
 #include "CalibrationPage.g.h"
 #include "CalibrationEntry.h"
+#include "CalibrationProcessor.h"
 #include "FrameReader.h"
 
 using namespace Platform::Collections;
@@ -36,9 +37,10 @@ namespace HeadViewer
 	public:
 		CalibrationPage();
 
+    internal:
         property IVectorView<CalibrationEntry^>^ CalibrationData
         {
-            IVectorView<CalibrationEntry^>^ get() { return m_calibrationData->GetView(); }
+            IVectorView<CalibrationEntry^>^ get() { return m_calibrationProcessor->CalibrationData->GetView(); }
         }
 
     protected:
@@ -50,12 +52,16 @@ namespace HeadViewer
         void OnCalibrationTimerTick(Platform::Object^ sender, Platform::Object^ args);
         void OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args);
         void OnCapturedImageClick(Object^ sender, RoutedEventArgs^ e);
+        void OnCloseCalibration(Object^ sender, RoutedEventArgs^ e);
+        void OnRepeatCalibration(Object^ sender, RoutedEventArgs^ e);
+        void OnShowAllImages(Object^ sender, RoutedEventArgs^ e);
+        void OnShowBestImage(Object^ sender, RoutedEventArgs^ e);
+        void OnShowFace(Object^ sender, RoutedEventArgs^ e);
 
     private:
         void ShowCalibrationResults();
         task<void> StartStreamingAsync(CalibrationPageParams^ params);
         task<void> StopStreamingAsync();
-        task<void> ProcessCalibrationImages();
 
     private:
         CalibrationPageParams^              m_pageParams;
@@ -64,8 +70,8 @@ namespace HeadViewer
         bool m_startCollecting;
         FrameReader^                        m_frameReader;
         DispatcherTimer^                    m_calibrationTimer;
-        Vector<CalibrationEntry^>^          m_calibrationData;
-
+      
         FaceDetector^                       m_faceDetector;
+        CalibrationProcessor^               m_calibrationProcessor;
     };
 }

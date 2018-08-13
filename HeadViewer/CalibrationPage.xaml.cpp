@@ -40,7 +40,7 @@ CalibrationPage::CalibrationPage()
     m_calibrationTimer->Tick += ref new EventHandler<Platform::Object ^>(this, &CalibrationPage::OnCalibrationTimerTick);
 
     m_frameReader = ref new FrameReader();
-    m_calibrationData = ref new Vector<CalibrationEntry^>();
+    m_calibrationProcessor = ref new CalibrationProcessor();
 }
 
 
@@ -89,11 +89,11 @@ void CalibrationPage::OnCalibrationTimerTick(Object ^sender, Object^ args)
 
     if (m_curRow >= 5)
     {
-        ShowCalibrationResults();
+        OnShowAllImages(nullptr, nullptr);
         return;
     }
 
-    m_calibrationData->Append(ref new CalibrationEntry());
+    m_calibrationProcessor->CalibrationData->Append(ref new CalibrationEntry());
 
     m_curCol += 2;
 
@@ -119,7 +119,7 @@ void CalibrationPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrived
 
     auto bitmap = m_frameReader->ConvertToDisplayableImage(frame->VideoMediaFrame);
 
-    auto curEntry = m_calibrationData->GetAt(m_calibrationData->Size - 1);
+    auto curEntry = m_calibrationProcessor->CalibrationData->GetAt(m_calibrationProcessor->CalibrationData->Size - 1);
     if ((curEntry->X == 0) && (curEntry->Y == 0))
     {
         Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this, curEntry]()
@@ -130,11 +130,28 @@ void CalibrationPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrived
             curEntry->Y = point.Y + (CalibrationDot->ActualHeight / 2);
         }));
     }
-    curEntry->AppendBitmap(bitmap);
+    curEntry->AppendBitmap(ref new SoftwareBitmapWrapper(bitmap));
 }
 
-void CalibrationPage::ShowCalibrationResults()
+void CalibrationPage::OnCloseCalibration(Object^ sender, RoutedEventArgs^ e)
 {
+
+}
+
+void CalibrationPage::OnRepeatCalibration(Object^ sender, RoutedEventArgs^ e)
+{
+    CalibrationResults->Visibility = Windows::UI::Xaml::Visibility::Collapsed;
+    m_calibrationTimer->Start();
+    StartStreamingAsync(m_pageParams);
+}
+
+void CalibrationPage::OnShowAllImages(Object^ sender, RoutedEventArgs^ e)
+{
+    if (m_frameReader == nullptr)
+    {
+        return;
+    }
+
     m_frameReader->StopStreamingAsync();
     Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this]()
     {
@@ -142,16 +159,40 @@ void CalibrationPage::ShowCalibrationResults()
         CalibrationGrid->Visibility = Windows::UI::Xaml::Visibility::Collapsed;
         CalibrationResults->Visibility = Windows::UI::Xaml::Visibility::Visible;
 
+        m_calibrationProcessor->ProcessCalibrationEntries();
+
         for (auto child : CalibrationImages->Children->GetView())
         {
             auto calibPointViewer = dynamic_cast<CalibrationPointViewer^>(child);
             int row = CalibrationImages->GetRow(calibPointViewer);
             int col = CalibrationImages->GetColumn(calibPointViewer);
             int index = (row * 3) + col;
+            if (index >= m_calibrationProcessor->CalibrationData->Size)
+            {
+                continue;
+            }
             calibPointViewer->FrameRate = m_pageParams->FrameFormat->FrameRate;
-            calibPointViewer->CalibEntry = m_calibrationData->GetAt(index);
+            calibPointViewer->CalibEntry = m_calibrationProcessor->CalibrationData->GetAt(index);
         }
     }));
+}
+
+void CalibrationPage::OnShowBestImage(Object^ sender, RoutedEventArgs^ e)
+{
+    for (auto child : CalibrationImages->Children->GetView())
+    {
+        auto calibPointViewer = dynamic_cast<CalibrationPointViewer^>(child);
+        calibPointViewer->ShowBestImage();
+    }
+}
+
+void CalibrationPage::OnShowFace(Object^ sender, RoutedEventArgs^ e)
+{
+    for (auto child : CalibrationImages->Children->GetView())
+    {
+        auto calibPointViewer = dynamic_cast<CalibrationPointViewer^>(child);
+        calibPointViewer->ShowFace();
+    }
 }
 
 void CalibrationPage::OnCapturedImageClick(Object^ sender, RoutedEventArgs^ e)
@@ -161,27 +202,5 @@ void CalibrationPage::OnCapturedImageClick(Object^ sender, RoutedEventArgs^ e)
 
 }
 
+
 #pragma optimize("", on)
-
-task<void> CalibrationPage::ProcessCalibrationImages()
-{
-    auto bmpTransform = ref new BitmapTransform();
-    for (auto entry : m_calibrationData)
-    {
-        for (auto bmp : entry->Bitmaps)
-        {
-            auto grayscaleBmp = SoftwareBitmap::Convert(bmp, BitmapPixelFormat::Gray8);
-            auto detectedFaces = co_await m_faceDetector->DetectFacesAsync(grayscaleBmp);
-            if (detectedFaces == nullptr)
-            {
-                continue;
-            }
-            for (auto face : detectedFaces)
-            {
-                bmpTransform->Bounds = face->FaceBox;
-            }
-        }
-    }
-}
-
-

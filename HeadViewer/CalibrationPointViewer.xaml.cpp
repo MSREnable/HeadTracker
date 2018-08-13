@@ -41,7 +41,7 @@ void CalibrationPointViewer::OnPreviousClicked(Object^ sender, RoutedEventArgs^ 
 {
     int size = m_bitmaps->Size;
     m_curBitmap = (m_curBitmap > 0) ? m_curBitmap - 1 : size - 1;
-    m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap));
+    m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap)->Bitmap);
     CurFrame->Text = m_curBitmap.ToString();
 }
 
@@ -63,6 +63,16 @@ void CalibrationPointViewer::OnNextClicked(Object^ sender, RoutedEventArgs^ e)
 {
     int size = m_bitmaps->Size;
     m_curBitmap = (m_curBitmap + 1) % size;
-    m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap));
+    m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap)->Bitmap);
     CurFrame->Text = m_curBitmap.ToString();
+}
+
+void CalibrationPointViewer::ShowBestImage()
+{
+    m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_calibrationEntry->BestImageIndex)->Bitmap);
+}
+
+void CalibrationPointViewer::ShowFace()
+{
+    m_bmpSource->SetBitmapAsync(m_calibrationEntry->NormalizedFace);
 }

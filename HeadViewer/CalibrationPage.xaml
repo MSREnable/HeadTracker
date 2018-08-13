@@ -9,7 +9,14 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Loaded="OnPageLoaded">
 
     <Grid>
-        <Grid x:Name="CalibrationResults" Visibility="Collapsed">
+        <StackPanel x:Name="CalibrationResults" Orientation="Vertical"  Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <Button Click="OnCloseCalibration" Content="Close"/>
+                <Button Click="OnRepeatCalibration" Content="Repeat"/>
+                <RadioButton GroupName="ResultsType" Checked="OnShowAllImages" Content="All Images" IsChecked="True"/>
+                <RadioButton GroupName="ResultsType" Checked="OnShowBestImage" Content="Best Image"/>
+                <RadioButton GroupName="ResultsType" Checked="OnShowFace" Content="Face"/>
+            </StackPanel>
             <Grid x:Name="CalibrationImages">
                 <Grid.RowDefinitions>
                     <RowDefinition />
@@ -31,7 +38,7 @@
                 <local:CalibrationPointViewer Grid.Row="2" Grid.Column="1" />
                 <local:CalibrationPointViewer Grid.Row="2" Grid.Column="2" />
             </Grid>
-        </Grid>
+        </StackPanel>
         
         <Grid x:Name="CalibrationGrid" Visibility="Visible">
             <Grid.RowDefinitions>

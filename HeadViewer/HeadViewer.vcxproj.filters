@@ -21,6 +21,8 @@
     <ClCompile Include="FrameReader.cpp" />
     <ClCompile Include="RBFTracker.cpp" />
     <ClCompile Include="CalibrationPage.xaml.cpp" />
+    <ClCompile Include="CalibrationProcessor.cpp" />
+    <ClCompile Include="SoftwareBitmapWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -33,6 +35,8 @@
     <ClInclude Include="RBFTracker.h" />
     <ClInclude Include="CalibrationPage.xaml.h" />
     <ClInclude Include="CalibrationEntry.h" />
+    <ClInclude Include="CalibrationProcessor.h" />
+    <ClInclude Include="SoftwareBitmapWrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

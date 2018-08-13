@@ -22,7 +22,7 @@ namespace HeadViewer
     public:
         CalibrationPointViewer();
 
-    public:
+    internal:
         property CalibrationEntry^ CalibEntry
         {
             CalibrationEntry^ get()
@@ -34,7 +34,7 @@ namespace HeadViewer
                 m_calibrationEntry = value;
                 m_bitmaps = value->Bitmaps;
                 m_curBitmap = 0;
-                m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap));
+                m_bmpSource->SetBitmapAsync(m_bitmaps->GetAt(m_curBitmap)->Bitmap);
                 
                 TotalFrames->Text = m_bitmaps->Size.ToString();
                 CurFrame->Text = m_curBitmap.ToString();
@@ -43,6 +43,10 @@ namespace HeadViewer
 
         property MediaRatio^      FrameRate;
         
+    internal:
+        void ShowBestImage();
+        void ShowFace();
+
     private:   
         void OnTimerTick(Object^ sender, Object^ args);
         void OnPreviousClicked(Object^ sender, RoutedEventArgs^ e);
@@ -52,9 +56,9 @@ namespace HeadViewer
 
     private:
         CalibrationEntry^ m_calibrationEntry;
-        IVectorView<SoftwareBitmap^>^       m_bitmaps;
-        int                                 m_curBitmap;
-        SoftwareBitmapSource^               m_bmpSource;
-        DispatcherTimer^                    m_timer;
+        IVectorView<SoftwareBitmapWrapper^>^    m_bitmaps;
+        int                                     m_curBitmap;
+        SoftwareBitmapSource^                   m_bmpSource;
+        DispatcherTimer^                        m_timer;
     };
 }
