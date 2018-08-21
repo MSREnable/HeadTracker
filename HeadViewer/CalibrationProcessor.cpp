@@ -2,7 +2,7 @@
 #include "CalibrationProcessor.h"
 #include <robuffer.h>
 
-#pragma optimize("", off)
+////#pragma optimize("", off)
 
 using namespace HeadViewer;
 using namespace Windows::UI::Xaml::Media::Imaging;
@@ -14,7 +14,7 @@ CalibrationProcessor::CalibrationProcessor()
     CalibrationData = ref new Vector<CalibrationEntry^>();
 }
 
-void CalibrationProcessor::ProcessCalibrationEntries()
+task<void> CalibrationProcessor::ProcessCalibrationEntries()
 {
     m_faceWidth = 0;
     m_faceHeight = 0;
@@ -41,11 +41,82 @@ void CalibrationProcessor::ProcessCalibrationEntries()
     }
 
     auto rc = Rect(0, 0, m_faceWidth, m_faceHeight);
+    Debug::WriteLine(L"Using Normalized face rect of size (w,h)=[%d, %d]", m_faceWidth, m_faceHeight);
+
     for (auto entry : CalibrationData)
     {
-        entry->NormalizedFaceRect = entry->MainFaceRect;
+        entry->NormalizedFaceRect = rc; // entry->MainFaceRect;
         entry->NormalizedFace = GetNormalizedFaceBitmap(entry);
     }
+
+
+    // compute correlation matrix
+    cv::Mat correlationMatrix(9, 9, CV_64F);
+    cv::Mat Y(2, 9, CV_64F);
+    for (unsigned int i = 0; i < CalibrationData->Size; i++)
+    {
+        auto calib1 = CalibrationData->GetAt(i);
+        auto mat1 = calib1->NormalizedFace->ImageGray;
+        Y.at<double>(0, i) = calib1->X;
+        Y.at<double>(1, i) = calib1->Y;
+
+        for (unsigned int j = 0; j < CalibrationData->Size; j++)
+        {
+            auto calib2 = CalibrationData->GetAt(j);
+
+            auto mat2 = calib2->NormalizedFace->ImageGray;
+            auto diffMat = mat1 - mat2;
+
+            auto sqrMat = diffMat.mul(diffMat);
+            auto sumMat = cv::sum(sqrMat);
+            correlationMatrix.at<double>(i, j) = sqrt(sumMat[0]);
+        }
+    }
+
+    auto correlationInverse = correlationMatrix.inv();
+
+    auto calibrationMatrix = Y * correlationInverse;
+
+    CalibrationMatrix = calibrationMatrix;
+
+    IsCalibrationValid = true;
+
+    co_return;
+}
+
+void CalibrationProcessor::Reset()
+{
+    CalibrationData->Clear();
+    IsCalibrationValid = false;
+}
+
+Point CalibrationProcessor::ComputeHeadGazeCoordinates(SoftwareBitmapWrapper^ bitmap)
+{
+    auto rc = GetMainFaceRect(bitmap);
+    if (rc.IsEmpty)
+    {
+        return Point(-1, -1);
+    }
+
+    cv::Mat faceRoi = bitmap->ImageGray(cv::Rect(rc.Left, rc.Top, rc.Width, rc.Height));
+    
+    cv::Mat normalFace;
+    cv::resize(faceRoi, normalFace, cv::Size(m_faceWidth, m_faceHeight));
+
+    cv::Mat testMat(9, 1, CV_64F);
+    for (unsigned int i = 0; i < CalibrationData->Size; i++)
+    {
+        auto calib = CalibrationData->GetAt(i);
+        auto calibMat = calib->NormalizedFace->ImageGray;
+        auto diffMat = normalFace - calibMat;
+        auto sqrMat = diffMat.mul(diffMat);
+        auto sumMat = cv::sum(sqrMat);
+        testMat.at<double>(i, 0) = sqrt(sumMat[0]);
+    }
+
+    cv::Mat result = CalibrationMatrix * testMat;
+    auto point = Point(result.at<double>(0, 0), result.at<double>(1, 0));
+    return point;
 }
 
 int CalibrationProcessor::GetBestImageIndex(CalibrationEntry^ entry)
@@ -75,7 +146,7 @@ Rect CalibrationProcessor::GetMainFaceRect(SoftwareBitmapWrapper^ bmpWrapper)
     return Rect(rc->left(), rc->top(), rc->width(), rc->height());
 }
 
-SoftwareBitmap^ CalibrationProcessor::GetNormalizedFaceBitmap(CalibrationEntry ^entry)
+SoftwareBitmapWrapper^ CalibrationProcessor::GetNormalizedFaceBitmap(CalibrationEntry ^entry)
 {
     auto image = entry->Bitmaps->GetAt(entry->BestImageIndex);
 
@@ -100,8 +171,7 @@ SoftwareBitmap^ CalibrationProcessor::GetNormalizedFaceBitmap(CalibrationEntry ^
     auto bmp = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, roi.Width, roi.Height, BitmapAlphaMode::Ignore);
     bmp->CopyFromBuffer(bitmap->PixelBuffer);
 
-    Debug::WriteLine(L"PixelFormat = %d, AlphaMode = %d", bmp->BitmapPixelFormat, bmp->BitmapAlphaMode);
-    return bmp;
+    return ref new SoftwareBitmapWrapper(bmp);
 }
 
 #pragma optimize("", on)

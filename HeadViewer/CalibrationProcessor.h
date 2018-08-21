@@ -21,15 +21,19 @@ namespace HeadViewer
     internal:
         CalibrationProcessor();
 
-        void ProcessCalibrationEntries();
+        task<void> ProcessCalibrationEntries();
+        void Reset();
+        Point ComputeHeadGazeCoordinates(SoftwareBitmapWrapper^ bitmap);
 
     private:
         int GetBestImageIndex(CalibrationEntry^ entry);
         Rect GetMainFaceRect(SoftwareBitmapWrapper^ bmpWrapper);
-        SoftwareBitmap^ GetNormalizedFaceBitmap(CalibrationEntry^ entry);
+        SoftwareBitmapWrapper^ GetNormalizedFaceBitmap(CalibrationEntry^ entry);
 
     internal:
+        bool                                IsCalibrationValid;
         Vector<CalibrationEntry^>^          CalibrationData;
+        cv::Mat                             CalibrationMatrix;
 
     private:
         int m_faceWidth;

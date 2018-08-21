@@ -74,5 +74,5 @@ void CalibrationPointViewer::ShowBestImage()
 
 void CalibrationPointViewer::ShowFace()
 {
-    m_bmpSource->SetBitmapAsync(m_calibrationEntry->NormalizedFace);
+    m_bmpSource->SetBitmapAsync(m_calibrationEntry->NormalizedFace->Bitmap);
 }

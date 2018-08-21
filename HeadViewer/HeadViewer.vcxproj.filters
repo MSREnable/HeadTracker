@@ -23,6 +23,8 @@
     <ClCompile Include="CalibrationPage.xaml.cpp" />
     <ClCompile Include="CalibrationProcessor.cpp" />
     <ClCompile Include="SoftwareBitmapWrapper.cpp" />
+    <ClCompile Include="CalibrationPointViewer.xaml.cpp" />
+    <ClCompile Include="GazeCursor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -37,6 +39,8 @@
     <ClInclude Include="CalibrationEntry.h" />
     <ClInclude Include="CalibrationProcessor.h" />
     <ClInclude Include="SoftwareBitmapWrapper.h" />
+    <ClInclude Include="CalibrationPointViewer.xaml.h" />
+    <ClInclude Include="GazeCursor.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

@@ -40,6 +40,12 @@
             </Grid>
         </StackPanel>
         
+        <Grid x:Name="ProcessingCalibration" Visibility="Collapsed">
+            <TextBlock HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalTextAlignment="Center" TextAlignment="Center">
+                Processing calibration images...
+            </TextBlock>
+        </Grid>
+        
         <Grid x:Name="CalibrationGrid" Visibility="Visible">
             <Grid.RowDefinitions>
                 <RowDefinition Height="100"/>

@@ -38,7 +38,7 @@ namespace HeadViewer
             }
         }
 
-        property SoftwareBitmap^ NormalizedFace;
+        property SoftwareBitmapWrapper^ NormalizedFace;
 
         CalibrationEntry()
         {

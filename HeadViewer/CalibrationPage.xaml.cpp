@@ -25,7 +25,7 @@ using namespace Windows::UI::Xaml::Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
-#pragma optimize("", off)
+////#pragma optimize("", off)
 
 CalibrationPage::CalibrationPage()
 {
@@ -41,6 +41,7 @@ CalibrationPage::CalibrationPage()
 
     m_frameReader = ref new FrameReader();
     m_calibrationProcessor = ref new CalibrationProcessor();
+    m_gazeCursor = ref new GazeCursor();
 }
 
 
@@ -79,7 +80,7 @@ void CalibrationPage::OnCalibrationTimerTick(Object ^sender, Object^ args)
     if ((m_curCol == 0) && (m_curRow == 0))
     {
         CalibrationDot->Visibility = Windows::UI::Xaml::Visibility::Visible;
-        m_startCollecting = true;
+        m_isCalibrationRunning = true;
     }
 
     CalibrationGrid->SetRow(CalibrationDot, m_curRow);
@@ -89,6 +90,7 @@ void CalibrationPage::OnCalibrationTimerTick(Object ^sender, Object^ args)
 
     if (m_curRow >= 5)
     {
+        m_isCalibrationRunning = false;
         OnShowAllImages(nullptr, nullptr);
         return;
     }
@@ -106,7 +108,7 @@ void CalibrationPage::OnCalibrationTimerTick(Object ^sender, Object^ args)
 
 void CalibrationPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrivedEventArgs^ args)
 {
-    if (!m_startCollecting)
+    if ((!m_isCalibrationRunning) && (!m_calibrationProcessor->IsCalibrationValid))
     {
         return;
     }
@@ -119,28 +121,42 @@ void CalibrationPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrived
 
     auto bitmap = m_frameReader->ConvertToDisplayableImage(frame->VideoMediaFrame);
 
-    auto curEntry = m_calibrationProcessor->CalibrationData->GetAt(m_calibrationProcessor->CalibrationData->Size - 1);
-    if ((curEntry->X == 0) && (curEntry->Y == 0))
+    if (m_isCalibrationRunning)
     {
-        Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this, curEntry]()
+        auto curEntry = m_calibrationProcessor->CalibrationData->GetAt(m_calibrationProcessor->CalibrationData->Size - 1);
+        if ((curEntry->X == 0) && (curEntry->Y == 0))
         {
-            auto ttv = CalibrationDot->TransformToVisual(Window::Current->Content);
-            auto point = ttv->TransformPoint(Point(0, 0));
-            curEntry->X = point.X + (CalibrationDot->ActualWidth / 2);
-            curEntry->Y = point.Y + (CalibrationDot->ActualHeight / 2);
+            Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this, curEntry]()
+            {
+                auto ttv = CalibrationDot->TransformToVisual(Window::Current->Content);
+                auto point = ttv->TransformPoint(Point(0, 0));
+                curEntry->X = point.X + (CalibrationDot->ActualWidth / 2);
+                curEntry->Y = point.Y + (CalibrationDot->ActualHeight / 2);
+            }));
+        }
+        curEntry->AppendBitmap(ref new SoftwareBitmapWrapper(bitmap));
+    }
+    else if (m_calibrationProcessor->IsCalibrationValid)
+    {
+        auto wrapper = ref new SoftwareBitmapWrapper(bitmap);
+        auto point = m_calibrationProcessor->ComputeHeadGazeCoordinates(wrapper);
+        Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this, point]()
+        {
+            m_gazeCursor->IsCursorVisible = true;
+            m_gazeCursor->Position = point;
         }));
     }
-    curEntry->AppendBitmap(ref new SoftwareBitmapWrapper(bitmap));
 }
 
 void CalibrationPage::OnCloseCalibration(Object^ sender, RoutedEventArgs^ e)
 {
-
+    Frame->Navigate(Windows::UI::Xaml::Interop::TypeName(MainPage::typeid));
 }
 
 void CalibrationPage::OnRepeatCalibration(Object^ sender, RoutedEventArgs^ e)
 {
     CalibrationResults->Visibility = Windows::UI::Xaml::Visibility::Collapsed;
+    m_calibrationProcessor->Reset();
     m_calibrationTimer->Start();
     StartStreamingAsync(m_pageParams);
 }
@@ -152,10 +168,10 @@ void CalibrationPage::OnShowAllImages(Object^ sender, RoutedEventArgs^ e)
         return;
     }
 
-    m_frameReader->StopStreamingAsync();
+    //m_frameReader->StopStreamingAsync();
+    m_calibrationTimer->Stop();
     Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this]()
     {
-        m_calibrationTimer->Stop();
         CalibrationGrid->Visibility = Windows::UI::Xaml::Visibility::Collapsed;
         CalibrationResults->Visibility = Windows::UI::Xaml::Visibility::Visible;
 

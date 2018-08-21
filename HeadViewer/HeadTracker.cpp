@@ -24,7 +24,7 @@ const float AVERAGE_IPD = 62.85;
 
 const float INITIAL_FOCAL_LENGTH_MM = 1.5;
 
-#pragma optimize("", off)
+////#pragma optimize("", off)
 
 static float GetApproxFocalLength(int fovDegrees, int width, int height)
 {

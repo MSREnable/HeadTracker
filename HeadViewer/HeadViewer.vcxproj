@@ -77,6 +77,7 @@
     <ClInclude Include="CalibrationProcessor.h" />
     <ClInclude Include="FrameReader.h" />
     <ClInclude Include="FrameSourceViewModels.h" />
+    <ClInclude Include="GazeCursor.h" />
     <ClInclude Include="SoftwareBitmapWrapper.h" />
     <ClInclude Include="HeadTracker.h" />
     <ClInclude Include="LookupTable.h" />
@@ -143,6 +144,7 @@
     <ClCompile Include="CalibrationProcessor.cpp" />
     <ClCompile Include="FrameReader.cpp" />
     <ClCompile Include="FrameSourceViewModels.cpp" />
+    <ClCompile Include="GazeCursor.cpp" />
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>

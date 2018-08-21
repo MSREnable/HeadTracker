@@ -9,6 +9,7 @@
 #include "CalibrationEntry.h"
 #include "CalibrationProcessor.h"
 #include "FrameReader.h"
+#include "GazeCursor.h"
 
 using namespace Platform::Collections;
 using namespace Windows::Graphics::Imaging;
@@ -64,13 +65,14 @@ namespace HeadViewer
         task<void> StopStreamingAsync();
 
     private:
-        CalibrationPageParams^              m_pageParams;
         int m_curRow;
         int m_curCol;
-        bool m_startCollecting;
+        CalibrationPageParams^              m_pageParams;
         FrameReader^                        m_frameReader;
         DispatcherTimer^                    m_calibrationTimer;
-      
+        bool                                m_isCalibrationRunning;
+
+        GazeCursor^                         m_gazeCursor;
         FaceDetector^                       m_faceDetector;
         CalibrationProcessor^               m_calibrationProcessor;
     };

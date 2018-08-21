@@ -27,7 +27,7 @@ using namespace Windows::Media::MediaProperties;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Media::Imaging;
 
-#pragma optimize("", off)
+////#pragma optimize("", off)
 
 #pragma region Low-level operations on reference pointers
 
