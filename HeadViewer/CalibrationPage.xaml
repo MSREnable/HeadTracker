@@ -16,6 +16,7 @@
                 <RadioButton GroupName="ResultsType" Checked="OnShowAllImages" Content="All Images" IsChecked="True"/>
                 <RadioButton GroupName="ResultsType" Checked="OnShowBestImage" Content="Best Image"/>
                 <RadioButton GroupName="ResultsType" Checked="OnShowFace" Content="Face"/>
+                <RadioButton GroupName="ResultsType" Checked="OnShowNormalizedFace" Content="Normalized Face"/>
             </StackPanel>
             <Grid x:Name="CalibrationImages">
                 <Grid.RowDefinitions>

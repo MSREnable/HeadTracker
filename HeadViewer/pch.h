@@ -38,3 +38,34 @@ public:
         OutputDebugString(L"\n");
     }
 };
+
+#include <opencv2/opencv.hpp>
+
+inline void DebugPrintMatrix(wchar_t *prefix, cv::Mat m)
+{
+    Debug::WriteLine(L"%s", prefix);
+    for (int i = 0; i < m.rows; i++)
+    {
+        for (int j = 0; j < m.cols - 1; j++)
+        {
+            if (CV_MAT_TYPE(m.type()) == CV_32FC1)
+            {
+                Debug::Write(L"%g, ", m.at<float>(i, j));
+            }
+            else if (CV_MAT_TYPE(m.type()) == CV_64FC1)
+            {
+                Debug::Write(L"%g, ", m.at<double>(i, j));
+            }
+
+
+        }
+        if (CV_MAT_TYPE(m.type()) == CV_32FC1)
+        {
+            Debug::Write(L"%g\n", m.at<float>(i, m.cols - 1));
+        }
+        else if (CV_MAT_TYPE(m.type()) == CV_64FC1)
+        {
+            Debug::Write(L"%g\n", m.at<double>(i, m.cols - 1));
+        }
+    }
+}

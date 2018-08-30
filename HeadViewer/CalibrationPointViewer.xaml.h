@@ -46,6 +46,7 @@ namespace HeadViewer
     internal:
         void ShowBestImage();
         void ShowFace();
+        void ShowNormalizedFace();
 
     private:   
         void OnTimerTick(Object^ sender, Object^ args);

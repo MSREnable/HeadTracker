@@ -42,6 +42,8 @@ CalibrationPage::CalibrationPage()
     m_frameReader = ref new FrameReader();
     m_calibrationProcessor = ref new CalibrationProcessor();
     m_gazeCursor = ref new GazeCursor();
+    m_gazeCursor->CursorRadius = 50;
+    m_nFrameNum = 0;
 }
 
 
@@ -119,6 +121,8 @@ void CalibrationPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrived
         return;
     }
 
+    m_nFrameNum++;
+
     auto bitmap = m_frameReader->ConvertToDisplayableImage(frame->VideoMediaFrame);
 
     if (m_isCalibrationRunning)
@@ -136,12 +140,13 @@ void CalibrationPage::OnFrameArrived(MediaFrameReader^ reader, MediaFrameArrived
         }
         curEntry->AppendBitmap(ref new SoftwareBitmapWrapper(bitmap));
     }
-    else if (m_calibrationProcessor->IsCalibrationValid)
+    else if ((m_calibrationProcessor->IsCalibrationValid) && (m_nFrameNum % 5 == 0))
     {
         auto wrapper = ref new SoftwareBitmapWrapper(bitmap);
         auto point = m_calibrationProcessor->ComputeHeadGazeCoordinates(wrapper);
         Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this, point]()
         {
+            m_gazeCursor->IsGazeEntered = true;
             m_gazeCursor->IsCursorVisible = true;
             m_gazeCursor->Position = point;
         }));
@@ -182,7 +187,7 @@ void CalibrationPage::OnShowAllImages(Object^ sender, RoutedEventArgs^ e)
             auto calibPointViewer = dynamic_cast<CalibrationPointViewer^>(child);
             int row = CalibrationImages->GetRow(calibPointViewer);
             int col = CalibrationImages->GetColumn(calibPointViewer);
-            int index = (row * 3) + col;
+            unsigned int index = (row * 3) + col;
             if (index >= m_calibrationProcessor->CalibrationData->Size)
             {
                 continue;
@@ -211,6 +216,14 @@ void CalibrationPage::OnShowFace(Object^ sender, RoutedEventArgs^ e)
     }
 }
 
+void CalibrationPage::OnShowNormalizedFace(Object^ sender, RoutedEventArgs^ e)
+{
+    for (auto child : CalibrationImages->Children->GetView())
+    {
+        auto calibPointViewer = dynamic_cast<CalibrationPointViewer^>(child);
+        calibPointViewer->ShowNormalizedFace();
+    }
+}
 void CalibrationPage::OnCapturedImageClick(Object^ sender, RoutedEventArgs^ e)
 {
     auto source = dynamic_cast<Button^>(sender);

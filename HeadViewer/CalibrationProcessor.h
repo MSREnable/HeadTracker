@@ -28,7 +28,7 @@ namespace HeadViewer
     private:
         int GetBestImageIndex(CalibrationEntry^ entry);
         Rect GetMainFaceRect(SoftwareBitmapWrapper^ bmpWrapper);
-        SoftwareBitmapWrapper^ GetNormalizedFaceBitmap(CalibrationEntry^ entry);
+        SoftwareBitmapWrapper^ GetFaceBitmap(CalibrationEntry^ entry, bool normalized);
 
     internal:
         bool                                IsCalibrationValid;

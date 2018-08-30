@@ -58,6 +58,7 @@ namespace HeadViewer
         void OnShowAllImages(Object^ sender, RoutedEventArgs^ e);
         void OnShowBestImage(Object^ sender, RoutedEventArgs^ e);
         void OnShowFace(Object^ sender, RoutedEventArgs^ e);
+        void OnShowNormalizedFace(Object^ sender, RoutedEventArgs^ e);
 
     private:
         void ShowCalibrationResults();
@@ -65,8 +66,10 @@ namespace HeadViewer
         task<void> StopStreamingAsync();
 
     private:
+        int m_nFrameNum;
         int m_curRow;
         int m_curCol;
+
         CalibrationPageParams^              m_pageParams;
         FrameReader^                        m_frameReader;
         DispatcherTimer^                    m_calibrationTimer;

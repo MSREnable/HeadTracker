@@ -10,7 +10,7 @@
     d:DesignWidth="400">
 
     <StackPanel Orientation="Vertical">
-        <Image x:Name="CalibrationImage"  Stretch="Fill"/>
+        <Image x:Name="CalibrationImage"  />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Click="OnPreviousClicked">
                 <SymbolIcon Symbol="Previous"/>
