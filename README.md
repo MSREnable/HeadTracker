@@ -16,7 +16,7 @@ Once you have vcpkg installed, you will then need to install dlib
 
 ```powershell
 .\vcpkg.exe install dlib:x64-windows
-.\vcpkg.exe install opencv:x64-windows
+.\vcpkg.exe install opencv3:x64-windows
 ```
 
 Note:
